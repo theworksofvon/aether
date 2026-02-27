@@ -1,0 +1,92 @@
+[01m[K/aether/src/gps_node/src/gps_node.cpp:231:2:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ after class definition
+  231 | }
+      |  [01;31m[K^[m[K
+      |  [32m[K;[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In constructor ‘[01m[KGpsNode::[01;32m[KGpsNode[m[K()[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:169:13:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K,[m[K’ or ‘[01m[K;[m[K’ before ‘[01m[Kfd_[m[K’
+  169 |             [01;31m[Kfd_[m[K = open_serial(port)
+      |             [01;31m[K^~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In member function ‘[01m[Kvoid GpsNode::[01;32m[Kloop[m[K()[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:185:39:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Kchar[m[K’ [[01;31m[K-fpermissive[m[K]
+  185 |             auto fields = split(line, [01;31m[K","[m[K);
+      |                                       [01;31m[K^~~[m[K
+      |                                       [01;31m[K|[m[K
+      |                                       [01;31m[Kconst char*[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:71:62:[m[K [01;36m[Knote: [m[K  initializing argument 2 of ‘[01m[Kstd::vector<std::__cxx11::basic_string<char>, std::allocator<std::__cxx11::basic_string<char> > >[01;32m[K split[m[K(const std::string&, char)[m[K’
+   71 | std::vector<std::string> split(const std::string& line, [01;36m[Kchar delim[m[K) {
+      |                                                         [01;36m[K~~~~~^~~~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:191:22:[m[K [01;31m[Kerror: [m[K‘[01m[KSetenceType[m[K’ has not been declared
+  191 |                 case [01;31m[KSetenceType[m[K::GSA: publishGSA(parse_gsa(fields)); break;
+      |                      [01;31m[K^~~~~~~~~~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In member function ‘[01m[Kvoid GpsNode::[01;32m[KpublishRMC[m[K(const RMC&)[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:199:13:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K,[m[K’ or ‘[01m[K;[m[K’ before ‘[01m[Kmsg[m[K’
+  199 |             [01;31m[Kmsg[m[K.latitude = r.lat;
+      |             [01;31m[K^~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In member function ‘[01m[Kvoid GpsNode::[01;32m[KpublishGGA[m[K(const GGA&)[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:208:22:[m[K [01;31m[Kerror: [m[Kexpected initializer before ‘[01m[Ksensor_msgs[m[K’
+  208 |             auto msg [01;31m[Ksensor_msgs[m[K::msg::NavSatFix();
+      |                      [01;31m[K^~~~~~~~~~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:210:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kmsg[m[K’ was not declared in this scope
+  210 |             [01;31m[Kmsg[m[K.latitude = g.lat;
+      |             [01;31m[K^~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:210:13:[m[K [01;36m[Knote: [m[Ksuggested alternatives:
+In file included from [01m[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/detail/list_parameters__struct.hpp:157[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/list_parameters.hpp:7[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/copy_all_parameter_values.hpp:21[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/rclcpp.hpp:171[m[K,
+                 from [01m[K/aether/src/gps_node/src/gps_node.cpp:11[m[K:
+[01m[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/msg/detail/list_parameters_result__struct.hpp:31:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Krcl_interfaces::msg[m[K’
+   31 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+In file included from [01m[K/opt/ros/jazzy/include/service_msgs/service_msgs/msg/detail/service_event_info__struct.hpp:24[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/detail/list_parameters__struct.hpp:268[m[K:
+[01m[K/opt/ros/jazzy/include/builtin_interfaces/builtin_interfaces/msg/detail/time__struct.hpp:31:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Kbuiltin_interfaces::msg[m[K’
+   31 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+[01m[K/opt/ros/jazzy/include/service_msgs/service_msgs/msg/detail/service_event_info__struct.hpp:35:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Kservice_msgs::msg[m[K’
+   35 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+In file included from [01m[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/detail/metrics_message__struct.hpp:27[m[K,
+                 from [01m[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/metrics_message.hpp:7[m[K,
+                 from [01m[K/opt/ros/jazzy/include/libstatistics_collector/libstatistics_collector/collector/generate_statistics_message.hpp:21[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/topic_statistics/subscription_topic_statistics.hpp:23[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/subscription.hpp:50[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/any_executable.hpp:25[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executor_options.hpp:22[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executor.hpp:38[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+                 from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/rclcpp.hpp:172[m[K:
+[01m[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/detail/statistic_data_point__struct.hpp:31:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstatistics_msgs::msg[m[K’
+   31 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+In file included from [01m[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_fix__struct.hpp:24[m[K,
+                 from [01m[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/nav_sat_fix.hpp:7[m[K,
+                 from [01m[K/aether/src/gps_node/src/gps_node.cpp:12[m[K:
+[01m[K/opt/ros/jazzy/include/std_msgs/std_msgs/msg/detail/header__struct.hpp:35:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd_msgs::msg[m[K’
+   35 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+In file included from [01m[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_fix__struct.hpp:26[m[K:
+[01m[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_status__struct.hpp:31:11:[m[K [01;36m[Knote: [m[K  ‘[01m[Ksensor_msgs::msg[m[K’
+   31 | namespace [01;36m[Kmsg[m[K
+      |           [01;36m[K^~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In member function ‘[01m[Kvoid GpsNode::[01;32m[KpublishGSA[m[K(const GSA&)[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:223:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kstatus_publisher[m[K’ was not declared in this scope; did you mean ‘[01m[Kstatus_publisher_[m[K’?
+  223 |             [01;31m[Kstatus_publisher[m[K->publish(msg);
+      |             [01;31m[K^~~~~~~~~~~~~~~~[m[K
+      |             [32m[Kstatus_publisher_[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:[m[K In function ‘[01m[Kint[01;32m[K main[m[K(int, char**)[m[K’:
+[01m[K/aether/src/gps_node/src/gps_node.cpp:235:5:[m[K [01;31m[Kerror: [m[K‘[01m[Krclpp[m[K’ has not been declared
+  235 |     [01;31m[Krclpp[m[K::init(argc, argv);
+      |     [01;31m[K^~~~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:236:5:[m[K [01;31m[Kerror: [m[K‘[01m[Krclpp[m[K’ has not been declared
+  236 |     [01;31m[Krclpp[m[K::spin(std::make_shared<GpsNode>());
+      |     [01;31m[K^~~~~[m[K
+[01m[K/aether/src/gps_node/src/gps_node.cpp:237:5:[m[K [01;31m[Kerror: [m[K‘[01m[Krclpp[m[K’ has not been declared
+  237 |     [01;31m[Krclpp[m[K::shutdown();
+      |     [01;31m[K^~~~~[m[K
+gmake[2]: *** [CMakeFiles/gps_node.dir/build.make:76: CMakeFiles/gps_node.dir/src/gps_node.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/gps_node.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

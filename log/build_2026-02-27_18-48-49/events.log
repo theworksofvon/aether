@@ -1,0 +1,128 @@
+[0.000000] (-) TimerEvent: {}
+[0.000552] (gps_node) JobQueued: {'identifier': 'gps_node', 'dependencies': OrderedDict()}
+[0.000735] (gps_node) JobStarted: {'identifier': 'gps_node'}
+[0.011331] (gps_node) JobProgress: {'identifier': 'gps_node', 'progress': 'cmake'}
+[0.012450] (gps_node) JobProgress: {'identifier': 'gps_node', 'progress': 'build'}
+[0.013304] (gps_node) Command: {'cmd': ['/usr/bin/cmake', '--build', '/aether/build/gps_node', '--', '-j4', '-l4'], 'cwd': '/aether/build/gps_node', 'env': OrderedDict({'HOSTNAME': '7588d7c43c28', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'HOME': '/root', 'ROS_PYTHON_VERSION': '3', 'container': 'podman', 'ROS_DISTRO': 'jazzy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'TERM': 'xterm', 'PATH': '/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/aether/build/gps_node', 'LC_ALL': 'C.UTF-8', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy'}), 'shell': False}
+[0.099670] (-) TimerEvent: {}
+[0.124196] (gps_node) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/gps_node.dir/src/gps_node.cpp.o\x1b[0m\n'}
+[0.199803] (-) TimerEvent: {}
+[0.300199] (-) TimerEvent: {}
+[0.400562] (-) TimerEvent: {}
+[0.500969] (-) TimerEvent: {}
+[0.601346] (-) TimerEvent: {}
+[0.701735] (-) TimerEvent: {}
+[0.802141] (-) TimerEvent: {}
+[0.902533] (-) TimerEvent: {}
+[1.002930] (-) TimerEvent: {}
+[1.103318] (-) TimerEvent: {}
+[1.203723] (-) TimerEvent: {}
+[1.304117] (-) TimerEvent: {}
+[1.404505] (-) TimerEvent: {}
+[1.504872] (-) TimerEvent: {}
+[1.605327] (-) TimerEvent: {}
+[1.706090] (-) TimerEvent: {}
+[1.806461] (-) TimerEvent: {}
+[1.906866] (-) TimerEvent: {}
+[2.007275] (-) TimerEvent: {}
+[2.107675] (-) TimerEvent: {}
+[2.208060] (-) TimerEvent: {}
+[2.308501] (-) TimerEvent: {}
+[2.408891] (-) TimerEvent: {}
+[2.509292] (-) TimerEvent: {}
+[2.609642] (-) TimerEvent: {}
+[2.710020] (-) TimerEvent: {}
+[2.810390] (-) TimerEvent: {}
+[2.910770] (-) TimerEvent: {}
+[3.011165] (-) TimerEvent: {}
+[3.111550] (-) TimerEvent: {}
+[3.211927] (-) TimerEvent: {}
+[3.312297] (-) TimerEvent: {}
+[3.374197] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:\x1b[m\x1b[K In member function \xe2\x80\x98\x1b[01m\x1b[Kvoid GpsNode::\x1b[01;32m\x1b[Kloop\x1b[m\x1b[K()\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[3.374544] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:185:39:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[Kinvalid conversion from \xe2\x80\x98\x1b[01m\x1b[Kconst char*\x1b[m\x1b[K\xe2\x80\x99 to \xe2\x80\x98\x1b[01m\x1b[Kchar\x1b[m\x1b[K\xe2\x80\x99 [\x1b[01;31m\x1b[K-fpermissive\x1b[m\x1b[K]\n'}
+[3.374660] (gps_node) StderrLine: {'line': b'  185 |             auto fields = split(line, \x1b[01;31m\x1b[K","\x1b[m\x1b[K);\n'}
+[3.374757] (gps_node) StderrLine: {'line': b'      |                                       \x1b[01;31m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.374883] (gps_node) StderrLine: {'line': b'      |                                       \x1b[01;31m\x1b[K|\x1b[m\x1b[K\n'}
+[3.374973] (gps_node) StderrLine: {'line': b'      |                                       \x1b[01;31m\x1b[Kconst char*\x1b[m\x1b[K\n'}
+[3.375057] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:71:62:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  initializing argument 2 of \xe2\x80\x98\x1b[01m\x1b[Kstd::vector<std::__cxx11::basic_string<char>, std::allocator<std::__cxx11::basic_string<char> > >\x1b[01;32m\x1b[K split\x1b[m\x1b[K(const std::string&, char)\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.375147] (gps_node) StderrLine: {'line': b'   71 | std::vector<std::string> split(const std::string& line, \x1b[01;36m\x1b[Kchar delim\x1b[m\x1b[K) {\n'}
+[3.375230] (gps_node) StderrLine: {'line': b'      |                                                         \x1b[01;36m\x1b[K~~~~~^~~~~\x1b[m\x1b[K\n'}
+[3.376274] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:\x1b[m\x1b[K In member function \xe2\x80\x98\x1b[01m\x1b[Kvoid GpsNode::\x1b[01;32m\x1b[KpublishGGA\x1b[m\x1b[K(const GGA&)\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[3.376408] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:208:22:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[Kexpected initializer before \xe2\x80\x98\x1b[01m\x1b[Ksensor_msgs\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.376501] (gps_node) StderrLine: {'line': b'  208 |             auto msg \x1b[01;31m\x1b[Ksensor_msgs\x1b[m\x1b[K::msg::NavSatFix();\n'}
+[3.376587] (gps_node) StderrLine: {'line': b'      |                      \x1b[01;31m\x1b[K^~~~~~~~~~~\x1b[m\x1b[K\n'}
+[3.377420] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:210:13:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kmsg\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope\n'}
+[3.377529] (gps_node) StderrLine: {'line': b'  210 |             \x1b[01;31m\x1b[Kmsg\x1b[m\x1b[K.latitude = g.lat;\n'}
+[3.377623] (gps_node) StderrLine: {'line': b'      |             \x1b[01;31m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.377712] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:210:13:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[Ksuggested alternatives:\n'}
+[3.377893] (gps_node) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/detail/list_parameters__struct.hpp:157\x1b[m\x1b[K,\n'}
+[3.378514] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/list_parameters.hpp:7\x1b[m\x1b[K,\n'}
+[3.378618] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/copy_all_parameter_values.hpp:21\x1b[m\x1b[K,\n'}
+[3.378713] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/rclcpp.hpp:171\x1b[m\x1b[K,\n'}
+[3.378817] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:11\x1b[m\x1b[K:\n'}
+[3.378913] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/msg/detail/list_parameters_result__struct.hpp:31:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Krcl_interfaces::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.379028] (gps_node) StderrLine: {'line': b'   31 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.379113] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.379196] (gps_node) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/opt/ros/jazzy/include/service_msgs/service_msgs/msg/detail/service_event_info__struct.hpp:24\x1b[m\x1b[K,\n'}
+[3.379280] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rcl_interfaces/rcl_interfaces/srv/detail/list_parameters__struct.hpp:268\x1b[m\x1b[K:\n'}
+[3.379362] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/builtin_interfaces/builtin_interfaces/msg/detail/time__struct.hpp:31:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Kbuiltin_interfaces::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.379446] (gps_node) StderrLine: {'line': b'   31 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.379525] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.379603] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/service_msgs/service_msgs/msg/detail/service_event_info__struct.hpp:35:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Kservice_msgs::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.379685] (gps_node) StderrLine: {'line': b'   35 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.379763] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.379864] (gps_node) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/detail/metrics_message__struct.hpp:27\x1b[m\x1b[K,\n'}
+[3.379948] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/metrics_message.hpp:7\x1b[m\x1b[K,\n'}
+[3.380046] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/libstatistics_collector/libstatistics_collector/collector/generate_statistics_message.hpp:21\x1b[m\x1b[K,\n'}
+[3.380130] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/topic_statistics/subscription_topic_statistics.hpp:23\x1b[m\x1b[K,\n'}
+[3.380211] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/subscription.hpp:50\x1b[m\x1b[K,\n'}
+[3.380305] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/any_executable.hpp:25\x1b[m\x1b[K,\n'}
+[3.380398] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/memory_strategy.hpp:25\x1b[m\x1b[K,\n'}
+[3.380478] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/memory_strategies.hpp:18\x1b[m\x1b[K,\n'}
+[3.380557] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/executor_options.hpp:22\x1b[m\x1b[K,\n'}
+[3.380635] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/executor.hpp:38\x1b[m\x1b[K,\n'}
+[3.380714] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25\x1b[m\x1b[K,\n'}
+[3.380805] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors.hpp:21\x1b[m\x1b[K,\n'}
+[3.380892] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/rclcpp/rclcpp/rclcpp.hpp:172\x1b[m\x1b[K:\n'}
+[3.380971] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/statistics_msgs/statistics_msgs/msg/detail/statistic_data_point__struct.hpp:31:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Kstatistics_msgs::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.381065] (gps_node) StderrLine: {'line': b'   31 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.381143] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.381222] (gps_node) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_fix__struct.hpp:24\x1b[m\x1b[K,\n'}
+[3.381301] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/nav_sat_fix.hpp:7\x1b[m\x1b[K,\n'}
+[3.381381] (gps_node) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/aether/src/gps_node/src/gps_node.cpp:12\x1b[m\x1b[K:\n'}
+[3.381460] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/std_msgs/std_msgs/msg/detail/header__struct.hpp:35:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Kstd_msgs::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.381541] (gps_node) StderrLine: {'line': b'   35 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.381620] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.381698] (gps_node) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_fix__struct.hpp:26\x1b[m\x1b[K:\n'}
+[3.381776] (gps_node) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/jazzy/include/sensor_msgs/sensor_msgs/msg/detail/nav_sat_status__struct.hpp:31:11:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K  \xe2\x80\x98\x1b[01m\x1b[Ksensor_msgs::msg\x1b[m\x1b[K\xe2\x80\x99\n'}
+[3.381882] (gps_node) StderrLine: {'line': b'   31 | namespace \x1b[01;36m\x1b[Kmsg\x1b[m\x1b[K\n'}
+[3.381963] (gps_node) StderrLine: {'line': b'      |           \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[3.412402] (-) TimerEvent: {}
+[3.512755] (-) TimerEvent: {}
+[3.613162] (-) TimerEvent: {}
+[3.713547] (-) TimerEvent: {}
+[3.813984] (-) TimerEvent: {}
+[3.914355] (-) TimerEvent: {}
+[4.014726] (-) TimerEvent: {}
+[4.115101] (-) TimerEvent: {}
+[4.215478] (-) TimerEvent: {}
+[4.315931] (-) TimerEvent: {}
+[4.416579] (-) TimerEvent: {}
+[4.516980] (-) TimerEvent: {}
+[4.617348] (-) TimerEvent: {}
+[4.717718] (-) TimerEvent: {}
+[4.818119] (-) TimerEvent: {}
+[4.918480] (-) TimerEvent: {}
+[5.018854] (-) TimerEvent: {}
+[5.119213] (-) TimerEvent: {}
+[5.219573] (-) TimerEvent: {}
+[5.319937] (-) TimerEvent: {}
+[5.420294] (-) TimerEvent: {}
+[5.520655] (-) TimerEvent: {}
+[5.621157] (-) TimerEvent: {}
+[5.626542] (gps_node) StderrLine: {'line': b'gmake[2]: *** [CMakeFiles/gps_node.dir/build.make:76: CMakeFiles/gps_node.dir/src/gps_node.cpp.o] Error 1\n'}
+[5.627072] (gps_node) StderrLine: {'line': b'gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/gps_node.dir/all] Error 2\n'}
+[5.627304] (gps_node) StderrLine: {'line': b'gmake: *** [Makefile:146: all] Error 2\n'}
+[5.630792] (gps_node) CommandEnded: {'returncode': 2}
+[5.649037] (gps_node) JobEnded: {'identifier': 'gps_node', 'rc': 2}
+[5.659845] (-) EventReactorShutdown: {}

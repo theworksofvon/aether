@@ -1,0 +1,2 @@
+Invoking command in '/aether/build/gps_node': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /aether/build/gps_node -- -j4 -l4
+Invoked command in '/aether/build/gps_node' returned '2': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /aether/build/gps_node -- -j4 -l4
