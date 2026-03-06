@@ -1,6 +1,7 @@
 FROM ros:jazzy-ros-base
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
     python3-colcon-common-extensions \
     build-essential \
     cmake \
@@ -9,9 +10,16 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /aether
 
+RUN pip install --no-cache-dir --break-system-packages \
+    adafruit-circuitpython-dht \
+    adafruit-blinka \
+    lgpio
+
 COPY . .
 
-# Source ROS 2 on every shell
-RUN echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+
+
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+ENV LGPIO_CHIP=4
 
 CMD ["/bin/bash"]
