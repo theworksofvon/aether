@@ -13,7 +13,8 @@ WORKDIR /aether
 RUN pip install --no-cache-dir --break-system-packages \
     adafruit-circuitpython-dht \
     adafruit-blinka \
-    lgpio
+    lgpio \
+    pymavlink
 
 COPY . .
 
