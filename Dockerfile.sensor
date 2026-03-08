@@ -3,9 +3,6 @@ FROM ros:jazzy-ros-base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-colcon-common-extensions \
-    build-essential \
-    cmake \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /aether
@@ -13,14 +10,16 @@ WORKDIR /aether
 RUN pip install --no-cache-dir --break-system-packages \
     adafruit-circuitpython-dht \
     adafruit-blinka \
-    lgpio \
-    pymavlink
+    lgpio
 
-COPY . .
-
-
-
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
 ENV LGPIO_CHIP=4
 
-CMD ["/bin/bash"]
+COPY src/sensor_node src/sensor_node
+
+RUN . /opt/ros/jazzy/setup.sh && \
+    colcon build --packages-select sensor_node
+
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+RUN echo "source /aether/install/setup.bash" >> /root/.bashrc
+
+CMD ["/bin/bash", "-c", "source /opt/ros/jazzy/setup.bash && source /aether/install/setup.bash && ros2 run sensor_node sensor_node"]
