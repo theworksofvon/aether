@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>sensor_node</name>
+  <name>vision_node</name>
   <version>0.0.1</version>
-  <description>Sensor node for aether drone</description>
+  <description>Vision node for aether drone</description>
   <maintainer email="admin@ek-labs.com">EK LABS</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
+  <depend>vision_msgs</depend>
 
   <export>
     <build_type>ament_python</build_type>
