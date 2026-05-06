@@ -20,6 +20,8 @@ Aether is a full-stack autonomous drone platform built from the ground up. The g
 
 Everything runs on a Raspberry Pi 5 mounted on the drone. C++ all the way down.
 
+For multi-drone use, this repo is the onboard edge runtime that runs on each aircraft. Fleet aggregation, operator UX, and mission coordination live above it; the local drone stack remains responsible for hardware access, local autonomy, and safe behavior when the coordinator link drops.
+
 ## Architecture
 
 ```
@@ -71,6 +73,7 @@ Everything runs on a Raspberry Pi 5 mounted on the drone. C++ all the way down.
 | `sensor_node` | 🔨 Planned | Reads ESP32 sensor data (temp, humidity, ultrasonic, sound) |
 | `vision_node` | 🔨 Planned | Pi Camera + YOLOv8 object detection |
 | `flight_node` | 🔨 Planned | MAVLink bridge to ArduPilot flight controller |
+| `edge_node` | ✅ Working | Fleet-facing command ingress and telemetry/status egress for one drone |
 
 ## ROS 2 Topics
 
@@ -80,6 +83,73 @@ Everything runs on a Raspberry Pi 5 mounted on the drone. C++ all the way down.
 | `/gps/status` | `sensor_msgs/NavSatStatus` | gps_node |
 | `/sensors` | TBD | sensor_node |
 | `/detections` | TBD | vision_node |
+
+## Multi-Drone Edge Runtime
+
+Each drone now runs the same Aether stack with a unique `drone_id`.
+Topic names are namespaced per aircraft so multiple drones can coexist on one network without collisions.
+
+Examples for drone `AE-01`:
+
+| Topic | Message Type | Purpose |
+|-------|-------------|---------|
+| `/AE-01/flight/gps` | `sensor_msgs/NavSatFix` | MAVLink-derived flight GPS |
+| `/AE-01/flight/attitude` | `geometry_msgs/Vector3` | Roll, pitch, yaw |
+| `/AE-01/flight/battery` | `sensor_msgs/BatteryState` | Battery state |
+| `/AE-01/flight/mode` | `std_msgs/String` | Current flight mode |
+| `/AE-01/gps/fix` | `sensor_msgs/NavSatFix` | Raw GPS receiver fix |
+| `/AE-01/gps/status` | `sensor_msgs/NavSatStatus` | Raw GPS receiver status |
+| `/AE-01/vision/detections` | `vision_msgs/Detection2DArray` | Vision detections |
+| `/AE-01/sensors/dht11` | `std_msgs/Float32MultiArray` | DHT11 sensor readings |
+| `/AE-01/flight/commands` | `std_msgs/String` | Flight commands routed from fleet control |
+| `/AE-01/autonomy/commands` | `std_msgs/String` | Autonomy commands routed from fleet control |
+| `/AE-01/vision/commands` | `std_msgs/String` | Vision commands routed from fleet control |
+| `/AE-01/mission/commands` | `std_msgs/String` | Mission commands routed from fleet control |
+| `/AE-01/system/commands` | `std_msgs/String` | Edge/system commands routed from fleet control |
+| `/AE-01/flight/events` | `std_msgs/String` | Flight node completion/result events |
+| `/AE-01/autonomy/events` | `std_msgs/String` | Autonomy node completion/result events |
+| `/AE-01/vision/events` | `std_msgs/String` | Vision node completion/result events |
+| `/AE-01/mission/events` | `std_msgs/String` | Mission node completion/result events |
+| `/AE-01/system/events` | `std_msgs/String` | System node completion/result events |
+| `/AE-01/edge/acks` | `std_msgs/String` | Local edge acknowledgement and completion stream |
+| `/fleet/commands` | `std_msgs/String` | Fleet command ingress |
+| `/fleet/acks` | `std_msgs/String` | Fleet acknowledgement egress |
+| `/fleet/telemetry` | `std_msgs/String` | Fleet telemetry summary egress |
+
+`edge_node` now acts as a typed router: it accepts a fleet command, checks whether the target matches this drone instance, resolves the responsible subsystem, publishes the command onto that subsystem's command topic, and relays completion events from subsystem event topics back to local and fleet acknowledgement streams.
+
+The fleet-facing and route topics currently use JSON payloads in `std_msgs/String` so the edge contract can evolve without introducing a custom message package yet.
+
+## Deployment
+
+Aether runs as a split edge stack rather than one monolith. Each node can fail and restart independently, which keeps non-essential failures from blocking the whole drone runtime.
+
+- `compose.yaml` defines the containerized stack
+- `systemd/aether.service` manages stack startup at boot
+- `scripts/build-containers.sh` builds the containers
+- `scripts/deploy-service.sh` installs and enables the systemd unit
+
+Service model:
+
+- `edge`, `gps`, and `flight` are core services
+- `sensor` and `vision` are optional services under the `optional` compose profile
+- container restart policy handles per-node recovery
+- systemd manages stack lifecycle, not individual node restart loops
+
+Typical operator flow:
+
+```bash
+cp .env.example .env
+./scripts/build-containers.sh
+sudo ./scripts/deploy-service.sh
+sudo systemctl start aether
+```
+
+To include optional services at runtime:
+
+```bash
+podman compose --profile optional up -d
+```
 
 ## Hardware
 
