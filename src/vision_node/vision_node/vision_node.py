@@ -1,23 +1,44 @@
+import os
+
+import cv2
 import rclpy
 from rclpy.node import Node
-from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 from ultralytics import YOLO
-import cv2
-
+from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
 
 class VisionNode(Node):
     def __init__(self):   
         super().__init__("vision_node")
-        self.vision_model = YOLO("yolo26n.pt")
-        self.capture = cv2.VideoCapture(0)
-        self.detected_publisher_ = self.create_publisher(Detection2DArray, "/drone/detections", 10)
+        self.drone_id = self.declare_parameter(
+            'drone_id',
+            os.getenv('AETHER_DRONE_ID', 'AE-01'),
+        ).value
+        model_path = self.declare_parameter(
+            'model_path',
+            os.getenv('AETHER_VISION_MODEL_PATH', 'yolo26n.pt'),
+        ).value
+        camera_index = int(
+            self.declare_parameter(
+                'camera_index',
+                int(os.getenv('AETHER_VISION_CAMERA_INDEX', '0')),
+            ).value
+        )
+        topic = self.declare_parameter(
+            'detections_topic',
+            f'/{self.drone_id}/vision/detections',
+        ).value
+
+        self.vision_model = YOLO(model_path)
+        self.capture = cv2.VideoCapture(camera_index)
+        self.detected_publisher_ = self.create_publisher(Detection2DArray, topic, 10)
         self.timer_ = self.create_timer(0.1, self.update)
-        self.get_logger().info("Vision node started....")
+        self.get_logger().info(
+            f'Vision node started for {self.drone_id} on {topic}'
+        )
 
 
     def update(self):
-        self.get_logger().info("update called...")
         ret, frame = self.capture.read()
 
         if not ret:
@@ -47,7 +68,6 @@ class VisionNode(Node):
                 msg.detections.append(detection)
 
 
-        self.get_logger().info(f"Detected {len(msg.detections)} objects")
         self.detected_publisher_.publish(msg)
 
 
