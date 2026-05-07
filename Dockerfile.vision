@@ -12,17 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /aether
 
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
-    opencv-python-headless \
-    ultralytics \
-    pydantic \
-    pydantic-settings
+    uv
 
-RUN python3 -c "from ultralytics import YOLO; YOLO('yolo26n.pt')"
-
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
 COPY config.py config.py
 COPY src/vision_node src/vision_node
 
 ENV PYTHONPATH=/aether
+
+RUN UV_CACHE_DIR=/tmp/uv-cache uv export --group vision --frozen --no-hashes --format requirements-txt -o /tmp/requirements-vision.txt && \
+    UV_CACHE_DIR=/tmp/uv-cache uv pip install --system -r /tmp/requirements-vision.txt
+
+RUN python3 -c "from ultralytics import YOLO; YOLO('yolo26n.pt')"
 
 RUN . /opt/ros/jazzy/setup.sh && \
     colcon build --packages-select vision_node

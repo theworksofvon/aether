@@ -129,6 +129,61 @@ That file groups environment-backed settings for:
 
 Each Python node reads from the shared config model first, then exposes ROS parameters on top of those validated defaults.
 
+## Python Dependencies
+
+Python dependencies are managed at the repo root with `uv` in [pyproject.toml](/home/von/dev/aether/pyproject.toml).
+Dependencies are split by runtime so each container installs only what it needs:
+
+- `edge`
+- `flight`
+- `sensor`
+- `vision`
+
+The Dockerfiles install only their own dependency group plus the shared config dependencies, which keeps `vision` heavy without forcing that weight into `edge` or `flight`.
+
+## Development Modes
+
+Do not treat your local workstation as if it has to perfectly mirror the Raspberry Pi runtime.
+Aether has two valid development environments:
+
+### Local host development
+
+Use this for:
+
+- code editing
+- Python validation
+- edge and flight logic
+- fast iteration without hardware
+
+Typical local setup:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv sync --group edge --group flight
+```
+
+If you need vision locally:
+
+```bash
+uv sync --group edge --group flight --group vision
+```
+
+You usually should not install the `sensor` group on a non-Pi machine unless you are specifically working on that node and have the system build dependencies it needs.
+
+### Pi and container runtime validation
+
+Use this for:
+
+- MAVLink serial integration
+- camera access
+- GPIO access
+- startup and restart behavior
+- anything that depends on the real drone hardware path
+
+This is the source of truth for runtime behavior.
+Local `uv` environments are for development speed; Podman containers on the target device are for integration truth.
+
 ## Deployment
 
 Aether runs as a split edge stack rather than one monolith. Each node can fail and restart independently, which keeps non-essential failures from blocking the whole drone runtime.
@@ -186,7 +241,8 @@ podman compose --profile optional up -d
 ```bash
 git clone https://github.com/theworksofvon/aether
 cd aether
-podman build -t aether .
+cp .env.example .env
+./scripts/build-containers.sh
 ```
 
 ## Roadmap

@@ -8,18 +8,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /aether
 
 RUN pip install --no-cache-dir --break-system-packages \
-    adafruit-circuitpython-dht \
-    adafruit-blinka \
-    lgpio \
-    pydantic \
-    pydantic-settings
+    uv
 
 ENV LGPIO_CHIP=4
 
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
 COPY config.py config.py
 COPY src/sensor_node src/sensor_node
 
 ENV PYTHONPATH=/aether
+
+RUN UV_CACHE_DIR=/tmp/uv-cache uv export --group sensor --frozen --no-hashes --format requirements-txt -o /tmp/requirements-sensor.txt && \
+    UV_CACHE_DIR=/tmp/uv-cache uv pip install --system -r /tmp/requirements-sensor.txt
 
 RUN . /opt/ros/jazzy/setup.sh && \
     colcon build --packages-select sensor_node
