@@ -10,11 +10,16 @@ WORKDIR /aether
 RUN pip install --no-cache-dir --break-system-packages \
     adafruit-circuitpython-dht \
     adafruit-blinka \
-    lgpio
+    lgpio \
+    pydantic \
+    pydantic-settings
 
 ENV LGPIO_CHIP=4
 
+COPY config.py config.py
 COPY src/sensor_node src/sensor_node
+
+ENV PYTHONPATH=/aether
 
 RUN . /opt/ros/jazzy/setup.sh && \
     colcon build --packages-select sensor_node

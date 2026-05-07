@@ -1,7 +1,6 @@
-import os
-
 import board
 import adafruit_dht
+from config import get_config
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -9,17 +8,18 @@ from std_msgs.msg import Float32MultiArray
 class SensorNode(Node):
     def __init__(self):
         super().__init__('sensor_node')
+        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
-            os.getenv('AETHER_DRONE_ID', 'AE-01'),
+            config.drone.AETHER_DRONE_ID,
         ).value
         topic = self.declare_parameter(
             'sensor_topic',
-            f'/{self.drone_id}/sensors/dht11',
+            config.topic('sensors/dht11'),
         ).value
         pin_name = self.declare_parameter(
             'dht_pin',
-            os.getenv('AETHER_SENSOR_DHT_PIN', 'D4'),
+            config.sensor.AETHER_SENSOR_DHT_PIN,
         ).value
         self.publisher_ = self.create_publisher(Float32MultiArray, topic, 10)
         self.timer_ = self.create_timer(2.0, self.read_sensor)

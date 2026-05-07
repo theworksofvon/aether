@@ -1,6 +1,5 @@
-import os
-
 import cv2
+from config import get_config
 import rclpy
 from rclpy.node import Node
 from ultralytics import YOLO
@@ -10,23 +9,24 @@ from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithP
 class VisionNode(Node):
     def __init__(self):   
         super().__init__("vision_node")
+        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
-            os.getenv('AETHER_DRONE_ID', 'AE-01'),
+            config.drone.AETHER_DRONE_ID,
         ).value
         model_path = self.declare_parameter(
             'model_path',
-            os.getenv('AETHER_VISION_MODEL_PATH', 'yolo26n.pt'),
+            config.vision.AETHER_VISION_MODEL_PATH,
         ).value
         camera_index = int(
             self.declare_parameter(
                 'camera_index',
-                int(os.getenv('AETHER_VISION_CAMERA_INDEX', '0')),
+                config.vision.AETHER_VISION_CAMERA_INDEX,
             ).value
         )
         topic = self.declare_parameter(
             'detections_topic',
-            f'/{self.drone_id}/vision/detections',
+            config.topic('vision/detections'),
         ).value
 
         self.vision_model = YOLO(model_path)

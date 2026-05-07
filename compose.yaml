@@ -15,20 +15,6 @@ services:
       AETHER_FLEET_ACKS_TOPIC: ${AETHER_FLEET_ACKS_TOPIC:-/fleet/acks}
       AETHER_FLEET_TELEMETRY_TOPIC: ${AETHER_FLEET_TELEMETRY_TOPIC:-/fleet/telemetry}
 
-  gps:
-    build:
-      context: .
-      dockerfile: Dockerfile.gps
-    container_name: aether-gps
-    restart: unless-stopped
-    network_mode: host
-    devices:
-      - ${AETHER_GPS_DEVICE:-/dev/ttyUSB0}:${AETHER_GPS_DEVICE:-/dev/ttyUSB0}
-    environment:
-      AETHER_DRONE_ID: ${AETHER_DRONE_ID:-AE-01}
-      GPS_PORT: ${AETHER_GPS_DEVICE:-/dev/ttyUSB0}
-      AETHER_GPS_BAUD_RATE: ${AETHER_GPS_BAUD_RATE:-9600}
-
   flight:
     build:
       context: .
@@ -37,10 +23,11 @@ services:
     restart: unless-stopped
     network_mode: host
     devices:
-      - ${AETHER_FLIGHT_DEVICE:-/dev/ttyAMA0}:${AETHER_FLIGHT_DEVICE:-/dev/ttyAMA0}
+      - ${AETHER_FLIGHT_DEVICE:-/dev/ttyUSB0}:${AETHER_FLIGHT_DEVICE:-/dev/ttyUSB0}
     environment:
       AETHER_DRONE_ID: ${AETHER_DRONE_ID:-AE-01}
-      AETHER_FLIGHT_PORT: ${AETHER_FLIGHT_DEVICE:-/dev/ttyAMA0}
+      AETHER_FLIGHT_PORT: ${AETHER_FLIGHT_DEVICE:-/dev/ttyUSB0}
+      AETHER_FLIGHT_BAUD_RATE: ${AETHER_FLIGHT_BAUD_RATE:-115200}
 
   sensor:
     build:

@@ -28,21 +28,21 @@ For multi-drone use, this repo is the onboard edge runtime that runs on each air
 ┌─────────────────────────────────────────────────────┐
 │                  Raspberry Pi 5                      │
 │                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ gps_node │  │ sensor   │  │  vision_node     │  │
-│  │          │  │ _node    │  │  (YOLOv8 Nano)   │  │
-│  └────┬─────┘  └────┬─────┘  └────────┬─────────┘  │
-│       │             │                 │             │
-│       └─────────────┴─────────────────┘             │
+│  ┌──────────┐  ┌──────────────────┐                │
+│  │ sensor   │  │  vision_node     │                │
+│  │ _node    │  │  (YOLOv8 Nano)   │                │
+│  └────┬─────┘  └────────┬─────────┘                │
+│       │                 │                          │
+│       └─────────────────┘                          │
 │                     │                               │
 │              ROS 2 Graph                            │
 │                     │                               │
 │            ┌────────┴────────┐                      │
 │            │  flight_node    │                      │
-│            │  (MAVLink)      │                      │
+│            │  (MAVLink + GPS)│                      │
 │            └────────┬────────┘                      │
 └─────────────────────┼───────────────────────────────┘
-                      │ UART
+                      │ USB-UART
               ┌───────┴────────┐
               │ Flight         │
               │ Controller     │
@@ -69,18 +69,15 @@ For multi-drone use, this repo is the onboard edge runtime that runs on each air
 
 | Node | Status | Description |
 |------|--------|-------------|
-| `gps_node` | ✅ Working | Parses NMEA sentences from NEO-6M, publishes to `/gps/fix` |
 | `sensor_node` | 🔨 Planned | Reads ESP32 sensor data (temp, humidity, ultrasonic, sound) |
 | `vision_node` | 🔨 Planned | Pi Camera + YOLOv8 object detection |
-| `flight_node` | 🔨 Planned | MAVLink bridge to ArduPilot flight controller |
+| `flight_node` | 🔨 Planned | MAVLink bridge to ArduPilot flight controller, including FC-sourced GPS |
 | `edge_node` | ✅ Working | Fleet-facing command ingress and telemetry/status egress for one drone |
 
 ## ROS 2 Topics
 
 | Topic | Message Type | Publisher |
 |-------|-------------|-----------|
-| `/gps/fix` | `sensor_msgs/NavSatFix` | gps_node |
-| `/gps/status` | `sensor_msgs/NavSatStatus` | gps_node |
 | `/sensors` | TBD | sensor_node |
 | `/detections` | TBD | vision_node |
 
@@ -94,11 +91,10 @@ Examples for drone `AE-01`:
 | Topic | Message Type | Purpose |
 |-------|-------------|---------|
 | `/AE-01/flight/gps` | `sensor_msgs/NavSatFix` | MAVLink-derived flight GPS |
+| `/AE-01/flight/gps_status` | `sensor_msgs/NavSatStatus` | MAVLink-derived GPS fix status |
 | `/AE-01/flight/attitude` | `geometry_msgs/Vector3` | Roll, pitch, yaw |
 | `/AE-01/flight/battery` | `sensor_msgs/BatteryState` | Battery state |
 | `/AE-01/flight/mode` | `std_msgs/String` | Current flight mode |
-| `/AE-01/gps/fix` | `sensor_msgs/NavSatFix` | Raw GPS receiver fix |
-| `/AE-01/gps/status` | `sensor_msgs/NavSatStatus` | Raw GPS receiver status |
 | `/AE-01/vision/detections` | `vision_msgs/Detection2DArray` | Vision detections |
 | `/AE-01/sensors/dht11` | `std_msgs/Float32MultiArray` | DHT11 sensor readings |
 | `/AE-01/flight/commands` | `std_msgs/String` | Flight commands routed from fleet control |
@@ -120,6 +116,19 @@ Examples for drone `AE-01`:
 
 The fleet-facing and route topics currently use JSON payloads in `std_msgs/String` so the edge contract can evolve without introducing a custom message package yet.
 
+## Configuration
+
+Runtime configuration now has a shared Python source of truth in [config.py](/home/von/dev/aether/config.py).
+That file groups environment-backed settings for:
+
+- drone identity and groups
+- flight controller serial link
+- sensor settings
+- vision settings
+- edge/fleet topics and timing
+
+Each Python node reads from the shared config model first, then exposes ROS parameters on top of those validated defaults.
+
 ## Deployment
 
 Aether runs as a split edge stack rather than one monolith. Each node can fail and restart independently, which keeps non-essential failures from blocking the whole drone runtime.
@@ -131,7 +140,7 @@ Aether runs as a split edge stack rather than one monolith. Each node can fail a
 
 Service model:
 
-- `edge`, `gps`, and `flight` are core services
+- `edge` and `flight` are core services
 - `sensor` and `vision` are optional services under the `optional` compose profile
 - container restart policy handles per-node recovery
 - systemd manages stack lifecycle, not individual node restart loops
@@ -160,7 +169,7 @@ podman compose --profile optional up -d
 | ESCs | 30A BLHeli_S x4 |
 | Flight Controller | Matek F405-Wing V2 (ArduPilot) |
 | Companion Computer | Raspberry Pi 5 |
-| GPS | NEO-6M |
+| GPS | Connected to Matek F405-Wing V2 |
 | Sensor Hub | ESP32 |
 | Battery | 3S 2200mAh LiPo |
 | Radio | FlySky FS-i6X |
@@ -170,7 +179,7 @@ podman compose --profile optional up -d
 ### Prerequisites
 - Raspberry Pi 5 running Ubuntu Server 24.04
 - Podman installed
-- GPS module connected to `/dev/ttyUSB0`
+- USB-UART adapter connecting the Pi to the Matek flight controller
 
 ### Setup
 
@@ -182,7 +191,7 @@ podman build -t aether .
 
 ## Roadmap
 
-- [x] GPS NMEA parser in C++
+- [x] MAVLink-based GPS telemetry from the flight controller
 - [x] ROS 2 Jazzy containerized environment
 - [x] GPS node publishing live position data
 - [ ] Flight controller MAVLink integration

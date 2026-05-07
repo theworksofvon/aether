@@ -3,16 +3,13 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
+from config import get_config
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import BatteryState, NavSatFix
 from std_msgs.msg import String
 
 
-ENV_DRONE_ID = 'AETHER_DRONE_ID'
-ENV_GROUPS = 'AETHER_DRONE_GROUPS'
-ENV_DISCONNECT_TIMEOUT = 'AETHER_EDGE_DISCONNECT_TIMEOUT_S'
-ENV_STATUS_PERIOD = 'AETHER_EDGE_STATUS_PERIOD_S'
 ENV_FLEET_COMMANDS_TOPIC = 'AETHER_FLEET_COMMANDS_TOPIC'
 ENV_FLEET_ACKS_TOPIC = 'AETHER_FLEET_ACKS_TOPIC'
 ENV_FLEET_TELEMETRY_TOPIC = 'AETHER_FLEET_TELEMETRY_TOPIC'
@@ -93,52 +90,53 @@ def json_or_default(value: str, default: dict) -> dict:
 class EdgeNode(Node):
     def __init__(self):
         super().__init__('edge_node')
+        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
-            os.getenv(ENV_DRONE_ID, 'AE-01'),
+            config.drone.AETHER_DRONE_ID,
         ).value
         self.groups = list(
             self.declare_parameter(
                 'groups',
-                parse_csv_env(os.getenv(ENV_GROUPS, '')),
+                config.drone.AETHER_DRONE_GROUPS,
             ).value
         )
         self.disconnect_timeout_s = float(
             self.declare_parameter(
                 'disconnect_timeout_s',
-                float(os.getenv(ENV_DISCONNECT_TIMEOUT, '15.0')),
+                config.edge.AETHER_EDGE_DISCONNECT_TIMEOUT_S,
             ).value
         )
         self.status_period_s = float(
             self.declare_parameter(
                 'status_period_s',
-                float(os.getenv(ENV_STATUS_PERIOD, '1.0')),
+                config.edge.AETHER_EDGE_STATUS_PERIOD_S,
             ).value
         )
 
         self.fleet_commands_topic = self.declare_parameter(
             'fleet_commands_topic',
-            os.getenv(ENV_FLEET_COMMANDS_TOPIC, '/fleet/commands'),
+            config.fleet.AETHER_FLEET_COMMANDS_TOPIC,
         ).value
         self.fleet_acks_topic = self.declare_parameter(
             'fleet_acks_topic',
-            os.getenv(ENV_FLEET_ACKS_TOPIC, '/fleet/acks'),
+            config.fleet.AETHER_FLEET_ACKS_TOPIC,
         ).value
         self.fleet_telemetry_topic = self.declare_parameter(
             'fleet_telemetry_topic',
-            os.getenv(ENV_FLEET_TELEMETRY_TOPIC, '/fleet/telemetry'),
+            config.fleet.AETHER_FLEET_TELEMETRY_TOPIC,
         ).value
 
         self.command_route_map = DEFAULT_COMMAND_ROUTES
         self.route_topics = self.load_route_topics()
         self.completion_topics = self.load_completion_topics()
 
-        self.flight_gps_topic = f'/{self.drone_id}/flight/gps'
-        self.flight_battery_topic = f'/{self.drone_id}/flight/battery'
-        self.flight_mode_topic = f'/{self.drone_id}/flight/mode'
-        self.autonomy_state_topic = f'/{self.drone_id}/autonomy/state'
-        self.mission_status_topic = f'/{self.drone_id}/mission/status'
-        self.edge_ack_topic = f'/{self.drone_id}/edge/acks'
+        self.flight_gps_topic = config.topic('flight/gps')
+        self.flight_battery_topic = config.topic('flight/battery')
+        self.flight_mode_topic = config.topic('flight/mode')
+        self.autonomy_state_topic = config.topic('autonomy/state')
+        self.mission_status_topic = config.topic('mission/status')
+        self.edge_ack_topic = config.topic('edge/acks')
 
         self.route_publishers = {
             route_name: self.create_publisher(String, topic_name, 10)
@@ -189,10 +187,11 @@ class EdgeNode(Node):
         )
 
     def load_route_topics(self) -> dict[str, str]:
+        config = get_config()
         topics = {}
         for route_name, route_suffix in DEFAULT_ROUTE_TOPICS.items():
             env_name = f'AETHER_{route_name.upper()}_COMMAND_TOPIC'
-            default_topic = f'/{self.drone_id}/{route_suffix}'
+            default_topic = config.topic(route_suffix)
             topics[route_name] = self.declare_parameter(
                 f'{route_name}_command_topic',
                 os.getenv(env_name, default_topic),
@@ -200,10 +199,11 @@ class EdgeNode(Node):
         return topics
 
     def load_completion_topics(self) -> dict[str, str]:
+        config = get_config()
         topics = {}
         for route_name, route_suffix in DEFAULT_COMPLETION_TOPICS.items():
             env_name = f'AETHER_{route_name.upper()}_EVENT_TOPIC'
-            default_topic = f'/{self.drone_id}/{route_suffix}'
+            default_topic = config.topic(route_suffix)
             topics[route_name] = self.declare_parameter(
                 f'{route_name}_event_topic',
                 os.getenv(env_name, default_topic),

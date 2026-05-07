@@ -64,7 +64,7 @@ podman run -d \
   --privileged \
   -v ~/aether:/aether \
   localhost/aether \
-  /bin/bash -c "source /opt/ros/jazzy/setup.bash && source /aether/install/setup.bash && ros2 run gps_node gps_node"
+  /bin/bash -c "source /opt/ros/jazzy/setup.bash && source /aether/install/setup.bash && ros2 run flight_node flight_node"
 ```
 
 Generate and install the systemd service:
