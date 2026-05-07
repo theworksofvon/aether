@@ -1,0 +1,29 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+  issues: read
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-6
+          prompt: |
+            Review this pull request for the Aether autonomous drone platform (ROS 2 Jazzy, C++20, Python 3).
+            Check for:
+            - Bugs and logic errors (especially in hardware I/O: serial, MAVLink, GPIO)
+            - Security vulnerabilities (unvalidated input from serial/MAVLink, hardcoded device paths)
+            - Performance issues (blocking I/O in timer callbacks, unnecessary memory allocation in hot paths)
+            - Code quality (naming conventions: PascalCase classes, snake_case functions, trailing underscore for private members; proper ROS 2 patterns)
+            - Adherence to project conventions (ROS logger for all logging, timer-based pub/sub loops, error handling via try/except in Python and return codes in C++)
