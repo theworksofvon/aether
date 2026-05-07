@@ -1,0 +1,4 @@
+[github_action_config]
+auto_review = true
+auto_describe = false
+auto_improve = false
