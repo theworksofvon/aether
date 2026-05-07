@@ -19,10 +19,11 @@ jobs:
       - uses: qodo-ai/pr-agent@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI.KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENAI.API_BASE: https://openrouter.ai/api/v1
+          OPENAI_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_BASE: https://openrouter.ai/api/v1
           CONFIG.MODEL: ${{ vars.REVIEW_MODEL }}
           CONFIG.MODEL_TURBO: ${{ vars.REVIEW_MODEL }}
+          GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
           PR_REVIEWER.EXTRA_INSTRUCTIONS: |
             This is the Aether autonomous drone platform (ROS 2 Jazzy, C++20, Python 3, Raspberry Pi 5).
             Review for:
