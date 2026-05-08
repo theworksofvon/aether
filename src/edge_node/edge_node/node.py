@@ -32,6 +32,10 @@ class EdgeNode(Node):
                 config.edge.AETHER_EDGE_STATUS_PERIOD_S,
             ).value
         )
+        auth_token = self.declare_parameter(
+            'command_auth_token',
+            config.security.AETHER_COMMAND_AUTH_TOKEN,
+        ).value
 
         self.fleet_commands_topic = self.declare_parameter(
             'fleet_commands_topic',
@@ -74,6 +78,7 @@ class EdgeNode(Node):
             route_topics=self.route_topics,
             completion_topics=self.completion_topics,
             disconnect_timeout_s=disconnect_timeout_s,
+            auth_token=auth_token,
             logger=self.get_logger(),
             clock_now_ns=lambda: self.get_clock().now().nanoseconds,
         )

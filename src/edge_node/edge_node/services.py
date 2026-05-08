@@ -1,18 +1,31 @@
 import os
 from typing import Optional
 
-from common import dumps_json, parse_json_object, utc_timestamp
+from common import (
+    dumps_json,
+    parse_json_object,
+    sign_payload,
+    utc_timestamp,
+    verify_signed_payload,
+)
 from config import get_config
 
 TARGET_TYPE_DRONE = 'drone'
 TARGET_TYPE_GROUP = 'group'
 TARGET_TYPE_BROADCAST = 'broadcast'
 TARGET_TYPE_MULTI = 'multi'
+VALID_TARGET_TYPES = {
+    TARGET_TYPE_DRONE,
+    TARGET_TYPE_GROUP,
+    TARGET_TYPE_BROADCAST,
+    TARGET_TYPE_MULTI,
+}
 
 ACK_STATUS_ACCEPTED = 'accepted'
 ACK_STATUS_COMPLETED = 'completed'
 ACK_STATUS_FAILED = 'failed'
-
+REASON_INVALID_COMMAND = 'invalid_command'
+REASON_INVALID_TARGET_TYPE = 'invalid_target_type'
 ROUTE_FLIGHT = 'flight'
 ROUTE_AUTONOMY = 'autonomy'
 ROUTE_VISION = 'vision'
@@ -64,6 +77,7 @@ class EdgeRoutingService:
         route_topics: dict[str, str],
         completion_topics: dict[str, str],
         disconnect_timeout_s: float,
+        auth_token: str,
         logger,
         clock_now_ns,
     ):
@@ -72,6 +86,7 @@ class EdgeRoutingService:
         self.route_topics = route_topics
         self.completion_topics = completion_topics
         self.disconnect_timeout_s = disconnect_timeout_s
+        self.auth_token = auth_token
         self.logger = logger
         self.clock_now_ns = clock_now_ns
         self.command_route_map = dict(DEFAULT_COMMAND_ROUTES)
@@ -84,11 +99,22 @@ class EdgeRoutingService:
         self.latest_mode = 'unknown'
         self.latest_autonomy_state = 'idle'
         self.latest_mission_status = 'idle'
+        self.outstanding_commands: dict[str, dict[str, str]] = {}
 
     def handle_command(self, raw_value: str) -> tuple[str | None, dict | None, dict | None]:
         command = parse_json_object(raw_value, logger=self.logger, log_prefix='fleet command')
         if command is None:
             return None, None, None
+
+        validation_reason = self.validate_command(command)
+        if validation_reason:
+            ack = self.build_ack(
+                command,
+                ACK_STATUS_FAILED,
+                route_name='unknown',
+                reason=validation_reason,
+            )
+            return None, None, ack
 
         if not self.matches_target(command):
             return None, None, None
@@ -115,6 +141,11 @@ class EdgeRoutingService:
             'route_topic': self.route_topics[route_name],
             'command': command,
         }
+        routed_command = sign_payload(routed_command, self.auth_token)
+        self.outstanding_commands[self.command_id(command)] = {
+            'route': route_name,
+            'command_type': self.command_type(command),
+        }
         ack = self.build_ack(command, ACK_STATUS_ACCEPTED, route_name=route_name)
         return route_name, routed_command, ack
 
@@ -126,17 +157,46 @@ class EdgeRoutingService:
         )
         if payload is None:
             return None
+        if not verify_signed_payload(payload, self.auth_token):
+            self.logger.warn(f'Ignoring unsigned or invalidly signed {route_name} completion')
+            return None
 
         command_id = str(payload.get('command_id', ''))
+        command_type = str(payload.get('command_type', 'unknown')).lower()
+        payload_drone_id = str(payload.get('drone_id', self.drone_id))
+        if not command_id:
+            self.logger.warn(
+                f'Ignoring {route_name} completion without command_id'
+            )
+            return None
+        if payload_drone_id != self.drone_id:
+            self.logger.warn(
+                f'Ignoring {route_name} completion for drone_id={payload_drone_id}'
+            )
+            return None
+
+        outstanding = self.outstanding_commands.get(command_id)
+        if outstanding is None:
+            self.logger.warn(
+                f'Ignoring unexpected {route_name} completion for command_id={command_id}'
+            )
+            return None
+        if outstanding['route'] != route_name or outstanding['command_type'] != command_type:
+            self.logger.warn(
+                f'Ignoring mismatched {route_name} completion for command_id={command_id}'
+            )
+            return None
+
         status = str(payload.get('status', ACK_STATUS_COMPLETED)).lower()
         if status not in {ACK_STATUS_COMPLETED, ACK_STATUS_FAILED}:
             status = ACK_STATUS_COMPLETED
+        self.outstanding_commands.pop(command_id, None)
 
         return {
             'ack_at': utc_timestamp(),
             'drone_id': self.drone_id,
             'command_id': command_id,
-            'command_type': str(payload.get('command_type', 'unknown')),
+            'command_type': command_type,
             'route': route_name,
             'status': status,
             'source_topic': self.completion_topics[route_name],
@@ -219,6 +279,8 @@ class EdgeRoutingService:
         target_type = self.command_target_type(command)
         target = command.get('target')
 
+        if target_type is None:
+            return False
         if target_type == TARGET_TYPE_BROADCAST:
             return True
         if target_type == TARGET_TYPE_DRONE:
@@ -230,16 +292,11 @@ class EdgeRoutingService:
             return isinstance(targets, list) and self.drone_id in targets
         return False
 
-    def command_target_type(self, command: dict) -> str:
+    def command_target_type(self, command: dict) -> str | None:
         value = str(command.get('target_type', TARGET_TYPE_DRONE)).lower()
-        if value in {
-            TARGET_TYPE_DRONE,
-            TARGET_TYPE_GROUP,
-            TARGET_TYPE_BROADCAST,
-            TARGET_TYPE_MULTI,
-        }:
+        if value in VALID_TARGET_TYPES:
             return value
-        return TARGET_TYPE_DRONE
+        return None
 
     def resolve_route_name(self, command: dict) -> str | None:
         route_name = self.command_route_map.get(self.command_type(command))
@@ -252,6 +309,15 @@ class EdgeRoutingService:
 
     def command_type(self, command: dict) -> str:
         return str(command.get('command_type', 'unknown')).lower()
+
+    def validate_command(self, command: dict) -> str:
+        if not self.command_id(command):
+            return REASON_INVALID_COMMAND
+        if not self.command_type(command) or self.command_type(command) == 'unknown':
+            return REASON_INVALID_COMMAND
+        if self.command_target_type(command) is None:
+            return REASON_INVALID_TARGET_TYPE
+        return ''
 
     def apply_command_state(self, command: dict):
         command_type = self.command_type(command)
