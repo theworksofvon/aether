@@ -34,8 +34,11 @@ Update `.env` for your hardware, especially:
 - `AETHER_DRONE_ID`
 - `AETHER_FLIGHT_DEVICE`
 - `AETHER_FLIGHT_BAUD_RATE`
+- `AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S`
+- `AETHER_COMMAND_AUTH_TOKEN`
 
 For a USB-UART bridge to the Matek, `AETHER_FLIGHT_DEVICE` will typically be something like `/dev/ttyUSB0`.
+Set `AETHER_COMMAND_AUTH_TOKEN` to a secret value shared by the `edge` and `flight` services before using the stack outside local development.
 
 ## 4. Build the Container Stack
 

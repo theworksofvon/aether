@@ -35,6 +35,10 @@ class FlightConfig(BaseSettings):
         description='Flight controller serial baud rate',
         default=115200,
     )
+    AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S: float = Field(
+        description='Seconds to wait for FC mode confirmation after a mode change request',
+        default=5.0,
+    )
 
 
 class SensorConfig(BaseSettings):
@@ -81,6 +85,13 @@ class FleetConfig(BaseSettings):
     )
 
 
+class SecurityConfig(BaseSettings):
+    AETHER_COMMAND_AUTH_TOKEN: str = Field(
+        description='Shared HMAC secret for routed commands and completion events',
+        default='aether-dev-shared-secret',
+    )
+
+
 class Config:
     def __init__(self):
         self.drone = DroneConfig()
@@ -89,6 +100,7 @@ class Config:
         self.vision = VisionConfig()
         self.edge = EdgeConfig()
         self.fleet = FleetConfig()
+        self.security = SecurityConfig()
 
     def topic(self, suffix: str) -> str:
         return f'/{self.drone.AETHER_DRONE_ID}/{suffix}'
