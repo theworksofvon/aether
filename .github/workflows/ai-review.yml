@@ -2,17 +2,38 @@ name: AI Code Review
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+  issue_comment:
+    types:
+      - created
 
 permissions:
   pull-requests: write
   contents: read
-  issues: read
+  issues: write
 
 jobs:
   ai-review:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+
+    if: >
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false
+      ) ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request != null &&
+        startsWith(github.event.comment.body, '/')
+        # Slash commands are intentionally allowed on draft PRs —
+        # typing /review on a draft is an explicit opt-in request.
+      )
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,11 +45,37 @@ jobs:
           CONFIG.MODEL: ${{ vars.REVIEW_MODEL }}
           CONFIG.MODEL_TURBO: ${{ vars.REVIEW_MODEL }}
           PR_REVIEWER.EXTRA_INSTRUCTIONS: |
-            This is the Aether autonomous drone platform (ROS 2 Jazzy, C++20, Python 3, Raspberry Pi 5).
-            Review for:
-            - Bugs and logic errors (especially in hardware I/O: serial, MAVLink, GPIO)
-            - Security vulnerabilities (unvalidated input from serial/MAVLink, hardcoded device paths)
-            - Performance issues (blocking I/O in timer callbacks, unnecessary memory allocation in hot paths)
-            - Code quality (PascalCase classes, snake_case functions, trailing underscore for private members)
-            - ROS 2 conventions (ROS logger for all logging, timer-based pub/sub loops, error handling via try/except in Python and return codes in C++)
-            Do not flag autonomy_node — it is a known incomplete stub.
+            This repository is the Aether autonomous drone platform
+            using ROS 2 Jazzy, C++20, Python 3, and Raspberry Pi 5.
+
+            Leave inline comments directly on problematic code.
+
+            Prioritize:
+            - Bugs and logic errors
+            - ROS callback/threading mistakes
+            - Blocking I/O in timer callbacks
+            - MAVLink/serial parsing vulnerabilities
+            - Unsafe hardware assumptions
+            - Missing exception handling
+            - Race conditions
+            - Memory/performance problems
+            - Hardcoded paths/devices
+            - Security issues from unvalidated input
+
+            Review specifically for:
+            - ROS 2 node lifecycle correctness
+            - Proper ROS logging usage
+            - Safe GPIO/serial usage
+            - C++20 correctness
+            - Python async/thread safety
+
+            Style conventions:
+            - PascalCase classes
+            - snake_case functions
+            - trailing underscore for private members
+
+            Avoid low-value nitpicks.
+            Only comment when there is a meaningful issue.
+
+            Do not review autonomy_node.
+            It is a known incomplete stub.

@@ -1,4 +1,21 @@
 [github_action_config]
 auto_review = true
 auto_describe = false
-auto_improve = false
+auto_improve = true
+
+[pr_reviewer]
+inline_code_comments = true
+
+[pr_code_suggestions]
+extra_instructions = """
+Generate concrete code suggestions when possible.
+
+Prefer:
+- Safer implementations
+- Non-blocking patterns
+- Better error handling
+- ROS-safe concurrency
+- More robust hardware interaction
+
+Keep suggestions concise and actionable.
+"""
