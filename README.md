@@ -116,6 +116,8 @@ Examples for drone `AE-01`:
 
 The fleet-facing and route topics currently use JSON payloads in `std_msgs/String` so the edge contract can evolve without introducing a custom message package yet.
 
+`flight_node` now consumes routed JSON commands from `/{drone_id}/flight/commands` and publishes command result events to `/{drone_id}/flight/events`. The current flight command surface is intentionally small: `ping`, `health_check`, `set_mode`, `hold`, and `rtl` are supported; unsupported commands fail explicitly with a structured `failed` event.
+
 ## Configuration
 
 Runtime configuration now has a shared Python source of truth in [config.py](/home/von/dev/aether/config.py).
@@ -128,6 +130,8 @@ That file groups environment-backed settings for:
 - edge/fleet topics and timing
 
 Each Python node reads from the shared config model first, then exposes ROS parameters on top of those validated defaults.
+
+The internal `common` package is not its own long-running service. It is a small Python helper library that gets built into only the node images that import it, so it does not make `sensor_node` or `vision_node` depend on `edge_node` or `flight_node` at runtime.
 
 ## Python Dependencies
 

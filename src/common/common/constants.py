@@ -1,0 +1,8 @@
+STATUS_COMPLETED = 'completed'
+STATUS_FAILED = 'failed'
+
+REASON_NO_CONNECTION = 'no_connection'
+REASON_INVALID_COMMAND = 'invalid_command'
+REASON_UNKNOWN_MODE = 'unknown_mode'
+REASON_UNSUPPORTED_COMMAND = 'unsupported_command'
+REASON_MAVLINK_SEND_FAILED = 'mavlink_send_failed'

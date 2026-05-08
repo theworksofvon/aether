@@ -13,6 +13,7 @@ WORKDIR /aether
 COPY pyproject.toml pyproject.toml
 COPY uv.lock uv.lock
 COPY config.py config.py
+COPY src/common src/common
 COPY src/flight_node src/flight_node
 
 ENV PYTHONPATH=/aether
@@ -21,7 +22,7 @@ RUN UV_CACHE_DIR=/tmp/uv-cache uv export --group flight --frozen --no-hashes --f
     UV_CACHE_DIR=/tmp/uv-cache uv pip install --system -r /tmp/requirements-flight.txt
 
 RUN . /opt/ros/jazzy/setup.sh && \
-    colcon build --packages-select flight_node
+    colcon build --packages-up-to flight_node
 
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
 RUN echo "source /aether/install/setup.bash" >> /root/.bashrc
