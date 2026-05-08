@@ -23,37 +23,8 @@ from .types import PendingModeCommand
 class FlightNode(Node):
     def __init__(self):
         super().__init__('flight_node')
-        self.drone_id = self.declare_parameter(
-            'drone_id',
-            config.drone.AETHER_DRONE_ID,
-        ).value
-        serial_port = self.declare_parameter(
-            'serial_port',
-            config.flight.AETHER_FLIGHT_PORT,
-        ).value
-        baud_rate = int(
-            self.declare_parameter(
-                'baud_rate',
-                config.flight.AETHER_FLIGHT_BAUD_RATE,
-            ).value
-        )
-        self.flight_topic_prefix = self.declare_parameter(
-            'flight_topic_prefix',
-            config.topic('flight'),
-        ).value
-        mode_confirm_timeout_s = float(
-            self.declare_parameter(
-                'mode_confirm_timeout_s',
-                config.flight.AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S,
-            ).value
-        )
-        auth_token = config.require_auth_token(
-            'flight_node',
-            self.declare_parameter(
-                'command_auth_token',
-                config.security.AETHER_COMMAND_AUTH_TOKEN,
-            ).value,
-        )
+        self.drone_id = config.drone.AETHER_DRONE_ID
+        self.flight_topic_prefix = config.topic('flight')
 
         self.gps_publisher_ = self.create_publisher(
             NavSatFix,
@@ -94,16 +65,22 @@ class FlightNode(Node):
             10,
         )
 
-        self.mavlink = MavlinkAdapter(serial_port, baud_rate, self.get_logger())
+        self.mavlink = MavlinkAdapter(
+            config.flight.AETHER_FLIGHT_PORT,
+            config.flight.AETHER_FLIGHT_BAUD_RATE,
+            self.get_logger(),
+        )
         self.mavlink.connect()
         self.command_service = FlightCommandService(
             drone_id=self.drone_id,
             mavlink_adapter=self.mavlink,
             logger=self.get_logger(),
-            auth_token=auth_token,
+            auth_token=config.require_auth_token('flight_node'),
         )
         self.pending_mode_command: PendingModeCommand | None = None
-        self.mode_confirm_timeout_ns = int(mode_confirm_timeout_s * 1_000_000_000)
+        self.mode_confirm_timeout_ns = int(
+            config.flight.AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S * 1_000_000_000
+        )
         self.timer_ = self.create_timer(0.2, self.update)
         self.get_logger().info(
             f'Flight node started for {self.drone_id} on {self.flight_topic_prefix}'

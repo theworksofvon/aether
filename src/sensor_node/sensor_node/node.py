@@ -9,18 +9,9 @@ from .services import sensor_reading_message
 class SensorNode(Node):
     def __init__(self):
         super().__init__('sensor_node')
-        self.drone_id = self.declare_parameter(
-            'drone_id',
-            config.drone.AETHER_DRONE_ID,
-        ).value
-        topic = self.declare_parameter(
-            'sensor_topic',
-            config.topic('sensors/dht11'),
-        ).value
-        pin_name = self.declare_parameter(
-            'dht_pin',
-            config.sensor.AETHER_SENSOR_DHT_PIN,
-        ).value
+        self.drone_id = config.drone.AETHER_DRONE_ID
+        topic = config.topic('sensors/dht11')
+        pin_name = config.sensor.AETHER_SENSOR_DHT_PIN
 
         self.publisher_ = self.create_publisher(Float32MultiArray, topic, 10)
         self.adapter = Dht11Adapter(pin_name=pin_name, logger=self.get_logger())

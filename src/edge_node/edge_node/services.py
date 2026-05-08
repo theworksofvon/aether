@@ -1,5 +1,3 @@
-import os
-
 from common.common.commands import parse_json_model
 from common.common.events import sign_payload, utc_timestamp, verify_signed_payload
 from common.common.types import CommandEvent, CommandModel, Position, RoutedCommandEnvelope
@@ -319,51 +317,21 @@ class EdgeRoutingService:
         ]
 
 
-def load_route_topics(node) -> RouteTopics:
+def load_route_topics() -> RouteTopics:
     return RouteTopics(
-        flight=node.declare_parameter(
-            'flight_command_topic',
-            os.getenv('AETHER_FLIGHT_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.flight)),
-        ).value,
-        autonomy=node.declare_parameter(
-            'autonomy_command_topic',
-            os.getenv('AETHER_AUTONOMY_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.autonomy)),
-        ).value,
-        vision=node.declare_parameter(
-            'vision_command_topic',
-            os.getenv('AETHER_VISION_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.vision)),
-        ).value,
-        mission=node.declare_parameter(
-            'mission_command_topic',
-            os.getenv('AETHER_MISSION_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.mission)),
-        ).value,
-        system=node.declare_parameter(
-            'system_command_topic',
-            os.getenv('AETHER_SYSTEM_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.system)),
-        ).value,
+        flight=config.flight_command_topic,
+        autonomy=config.autonomy_command_topic,
+        vision=config.vision_command_topic,
+        mission=config.mission_command_topic,
+        system=config.system_command_topic,
     )
 
 
-def load_completion_topics(node) -> RouteTopics:
+def load_completion_topics() -> RouteTopics:
     return RouteTopics(
-        flight=node.declare_parameter(
-            'flight_event_topic',
-            os.getenv('AETHER_FLIGHT_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.flight)),
-        ).value,
-        autonomy=node.declare_parameter(
-            'autonomy_event_topic',
-            os.getenv('AETHER_AUTONOMY_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.autonomy)),
-        ).value,
-        vision=node.declare_parameter(
-            'vision_event_topic',
-            os.getenv('AETHER_VISION_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.vision)),
-        ).value,
-        mission=node.declare_parameter(
-            'mission_event_topic',
-            os.getenv('AETHER_MISSION_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.mission)),
-        ).value,
-        system=node.declare_parameter(
-            'system_event_topic',
-            os.getenv('AETHER_SYSTEM_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.system)),
-        ).value,
+        flight=config.flight_event_topic,
+        autonomy=config.autonomy_event_topic,
+        vision=config.vision_event_topic,
+        mission=config.mission_event_topic,
+        system=config.system_event_topic,
     )

@@ -9,24 +9,10 @@ from .services import detections_message
 class VisionNode(Node):
     def __init__(self):
         super().__init__('vision_node')
-        self.drone_id = self.declare_parameter(
-            'drone_id',
-            config.drone.AETHER_DRONE_ID,
-        ).value
-        model_path = self.declare_parameter(
-            'model_path',
-            config.vision.AETHER_VISION_MODEL_PATH,
-        ).value
-        camera_index = int(
-            self.declare_parameter(
-                'camera_index',
-                config.vision.AETHER_VISION_CAMERA_INDEX,
-            ).value
-        )
-        topic = self.declare_parameter(
-            'detections_topic',
-            config.topic('vision/detections'),
-        ).value
+        self.drone_id = config.drone.AETHER_DRONE_ID
+        model_path = config.vision.AETHER_VISION_MODEL_PATH
+        camera_index = config.vision.AETHER_VISION_CAMERA_INDEX
+        topic = config.topic('vision/detections')
 
         self.detected_publisher_ = self.create_publisher(Detection2DArray, topic, 10)
         self.adapter = VisionAdapter(model_path=model_path, camera_index=camera_index)
