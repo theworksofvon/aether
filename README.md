@@ -210,15 +210,15 @@ Typical operator flow:
 
 ```bash
 cp .env.example .env
-./scripts/build-containers.sh
-sudo ./scripts/deploy-service.sh
-sudo systemctl start aether
+make build
+make deploy-service
+make start-service
 ```
 
 To include optional services at runtime:
 
 ```bash
-podman compose --profile optional up -d
+make up-optional
 ```
 
 ## Hardware
@@ -247,8 +247,47 @@ podman compose --profile optional up -d
 ```bash
 git clone https://github.com/theworksofvon/aether
 cd aether
-cp .env.example .env
-./scripts/build-containers.sh
+make init-env
+make build
+```
+
+## Hardware Integration Test
+
+On the Raspberry Pi, the shortest path to a real hardware test is:
+
+1. Connect the Matek flight controller to the Pi through the USB-UART adapter
+2. Confirm the serial device exists:
+
+```bash
+make serial-devices
+```
+
+3. Update `.env` with the correct serial device and auth token:
+
+```bash
+AETHER_FLIGHT_DEVICE=/dev/ttyUSB0
+AETHER_COMMAND_AUTH_TOKEN=replace-with-a-real-secret
+```
+
+4. Start the runtime:
+
+```bash
+make up
+```
+
+5. Inspect status and logs:
+
+```bash
+make hardware-check
+make tail-flight
+```
+
+If you want the runtime to survive reboots on the Pi:
+
+```bash
+make deploy-service
+make start-service
+make service-status
 ```
 
 ## Roadmap
