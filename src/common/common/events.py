@@ -38,6 +38,7 @@ def dumps_json(payload: BaseModel) -> str:
     return canonical_json(payload)
 
 
+# keeps signing and verification stable by forcing one byte representation.
 def canonical_json(payload: BaseModel) -> str:
     return json.dumps(
         payload_to_data(payload),
