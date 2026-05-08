@@ -1,9 +1,11 @@
+from common.common.publishers import JsonPublisher
 from config import config
 from rclpy.node import Node
 from sensor_msgs.msg import BatteryState, NavSatFix
 from std_msgs.msg import String
 
 from .services import EdgeRoutingService, load_completion_topics, load_route_topics
+from .types import EdgeAck, RoutePublishers
 
 
 class EdgeNode(Node):
@@ -62,16 +64,23 @@ class EdgeNode(Node):
         self.mission_status_topic = config.topic('mission/status')
         self.edge_ack_topic = config.topic('edge/acks')
 
-        self.route_publishers = {
-            route_name: self.create_publisher(String, topic_name, 10)
-            for route_name, topic_name in self.route_topics.items()
-        }
-        self.edge_ack_publisher = self.create_publisher(String, self.edge_ack_topic, 10)
-        self.fleet_ack_publisher = self.create_publisher(String, self.fleet_acks_topic, 10)
-        self.fleet_telemetry_publisher = self.create_publisher(
-            String,
-            self.fleet_telemetry_topic,
-            10,
+        self.route_publishers = RoutePublishers(
+            flight=JsonPublisher(self.create_publisher(String, self.route_topics.flight, 10)),
+            autonomy=JsonPublisher(
+                self.create_publisher(String, self.route_topics.autonomy, 10)
+            ),
+            vision=JsonPublisher(self.create_publisher(String, self.route_topics.vision, 10)),
+            mission=JsonPublisher(self.create_publisher(String, self.route_topics.mission, 10)),
+            system=JsonPublisher(self.create_publisher(String, self.route_topics.system, 10)),
+        )
+        self.edge_ack_publisher = JsonPublisher(
+            self.create_publisher(String, self.edge_ack_topic, 10)
+        )
+        self.fleet_ack_publisher = JsonPublisher(
+            self.create_publisher(String, self.fleet_acks_topic, 10)
+        )
+        self.fleet_telemetry_publisher = JsonPublisher(
+            self.create_publisher(String, self.fleet_telemetry_topic, 10)
         )
 
         self.service = EdgeRoutingService(
@@ -110,7 +119,7 @@ class EdgeNode(Node):
     def handle_command(self, msg: String):
         route_name, routed_command, ack = self.service.handle_command(msg.data)
         if route_name and routed_command:
-            self.service.publish_json(self.route_publishers[route_name], routed_command)
+            self.route_publishers.publisher_for(route_name).publish(routed_command)
         if ack:
             self.publish_ack(ack)
 
@@ -135,11 +144,8 @@ class EdgeNode(Node):
         self.service.handle_mission_status(msg.data)
 
     def publish_status_summary(self):
-        self.service.publish_json(
-            self.fleet_telemetry_publisher,
-            self.service.build_status_summary(),
-        )
+        self.fleet_telemetry_publisher.publish(self.service.build_status_summary())
 
-    def publish_ack(self, payload: dict):
-        self.service.publish_json(self.edge_ack_publisher, payload)
-        self.service.publish_json(self.fleet_ack_publisher, payload)
+    def publish_ack(self, payload: EdgeAck):
+        self.edge_ack_publisher.publish(payload)
+        self.fleet_ack_publisher.publish(payload)

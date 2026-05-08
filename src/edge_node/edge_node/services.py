@@ -1,14 +1,11 @@
 import os
 
-from common import (
-    dumps_json,
-    parse_json_object,
-    sign_payload,
-    utc_timestamp,
-    verify_signed_payload,
-)
+from common.common.commands import parse_json_model
+from common.common.events import sign_payload, utc_timestamp, verify_signed_payload
+from common.common.types import CommandEvent, CommandModel, Position, RoutedCommandEnvelope
 from config import config
-from std_msgs.msg import String
+
+from .types import EdgeAck, OutstandingCommand, RouteTopics, StatusSummary
 
 TARGET_TYPE_DRONE = 'drone'
 TARGET_TYPE_GROUP = 'group'
@@ -32,41 +29,21 @@ ROUTE_VISION = 'vision'
 ROUTE_MISSION = 'mission'
 ROUTE_SYSTEM = 'system'
 
-DEFAULT_COMMAND_ROUTES = {
-    'arm': ROUTE_FLIGHT,
-    'disarm': ROUTE_FLIGHT,
-    'takeoff': ROUTE_FLIGHT,
-    'land': ROUTE_FLIGHT,
-    'rtl': ROUTE_FLIGHT,
-    'hold': ROUTE_FLIGHT,
-    'set_mode': ROUTE_FLIGHT,
-    'goto_waypoint': ROUTE_FLIGHT,
-    'ping': ROUTE_FLIGHT,
-    'health_check': ROUTE_FLIGHT,
-    'start_mission': ROUTE_MISSION,
-    'pause_mission': ROUTE_MISSION,
-    'resume_mission': ROUTE_MISSION,
-    'abort_mission': ROUTE_MISSION,
-    'set_autonomy_state': ROUTE_AUTONOMY,
-    'start_scan': ROUTE_VISION,
-    'stop_scan': ROUTE_VISION,
-}
+DEFAULT_ROUTE_TOPICS = RouteTopics(
+    flight='flight/commands',
+    autonomy='autonomy/commands',
+    vision='vision/commands',
+    mission='mission/commands',
+    system='system/commands',
+)
 
-DEFAULT_ROUTE_TOPICS = {
-    ROUTE_FLIGHT: 'flight/commands',
-    ROUTE_AUTONOMY: 'autonomy/commands',
-    ROUTE_VISION: 'vision/commands',
-    ROUTE_MISSION: 'mission/commands',
-    ROUTE_SYSTEM: 'system/commands',
-}
-
-DEFAULT_COMPLETION_TOPICS = {
-    ROUTE_FLIGHT: 'flight/events',
-    ROUTE_AUTONOMY: 'autonomy/events',
-    ROUTE_VISION: 'vision/events',
-    ROUTE_MISSION: 'mission/events',
-    ROUTE_SYSTEM: 'system/events',
-}
+DEFAULT_COMPLETION_TOPICS = RouteTopics(
+    flight='flight/events',
+    autonomy='autonomy/events',
+    vision='vision/events',
+    mission='mission/events',
+    system='system/events',
+)
 
 
 class EdgeRoutingService:
@@ -74,8 +51,8 @@ class EdgeRoutingService:
         self,
         drone_id: str,
         groups: list[str],
-        route_topics: dict[str, str],
-        completion_topics: dict[str, str],
+        route_topics: RouteTopics,
+        completion_topics: RouteTopics,
         disconnect_timeout_s: float,
         auth_token: str,
         logger,
@@ -89,7 +66,6 @@ class EdgeRoutingService:
         self.auth_token = auth_token
         self.logger = logger
         self.clock_now_ns = clock_now_ns
-        self.command_route_map = dict(DEFAULT_COMMAND_ROUTES)
 
         self.last_contact_monotonic: int | None = None
         self.last_command_id = ''
@@ -99,10 +75,18 @@ class EdgeRoutingService:
         self.latest_mode = 'unknown'
         self.latest_autonomy_state = 'idle'
         self.latest_mission_status = 'idle'
-        self.outstanding_commands: dict[str, dict[str, str]] = {}
+        self.outstanding_commands: list[OutstandingCommand] = []
 
-    def handle_command(self, raw_value: str) -> tuple[str | None, dict | None, dict | None]:
-        command = parse_json_object(raw_value, logger=self.logger, log_prefix='fleet command')
+    def handle_command(
+        self,
+        raw_value: str,
+    ) -> tuple[str | None, RoutedCommandEnvelope | None, EdgeAck | None]:
+        command = parse_json_model(
+            raw_value,
+            CommandModel,
+            logger=self.logger,
+            log_prefix='fleet command',
+        )
         if command is None:
             return None, None, None
 
@@ -120,8 +104,8 @@ class EdgeRoutingService:
             return None, None, None
 
         self.last_contact_monotonic = self.clock_now_ns()
-        self.last_command_id = self.command_id(command)
-        self.last_command_type = self.command_type(command)
+        self.last_command_id = command.command_id
+        self.last_command_type = command.command_type
 
         route_name = self.resolve_route_name(command)
         if route_name is None:
@@ -133,24 +117,26 @@ class EdgeRoutingService:
             )
             return None, None, ack
 
-        routed_command = {
-            'received_at': utc_timestamp(),
-            'drone_id': self.drone_id,
-            'route': route_name,
-            'route_topic': self.route_topics[route_name],
-            'command': command,
-        }
+        routed_command = RoutedCommandEnvelope(
+            received_at=utc_timestamp(),
+            drone_id=self.drone_id,
+            route=route_name,
+            route_topic=self.route_topics.topic_for(route_name),
+            command=command,
+        )
         routed_command = sign_payload(routed_command, self.auth_token)
-        self.outstanding_commands[self.command_id(command)] = {
-            'route': route_name,
-            'command_type': self.command_type(command),
-        }
+        self.outstanding_commands.append(OutstandingCommand(
+            command_id=command.command_id,
+            route=route_name,
+            command_type=command.command_type,
+        ))
         ack = self.build_ack(command, ACK_STATUS_ACCEPTED, route_name=route_name)
         return route_name, routed_command, ack
 
-    def handle_route_completion(self, route_name: str, raw_value: str) -> dict | None:
-        payload = parse_json_object(
+    def handle_route_completion(self, route_name: str, raw_value: str) -> EdgeAck | None:
+        payload = parse_json_model(
             raw_value,
+            CommandEvent,
             logger=self.logger,
             log_prefix=f'{route_name} completion',
         )
@@ -160,55 +146,52 @@ class EdgeRoutingService:
             self.logger.warn(f'Ignoring unsigned or invalidly signed {route_name} completion')
             return None
 
-        command_id = str(payload.get('command_id', ''))
-        command_type = str(payload.get('command_type', 'unknown')).lower()
-        payload_drone_id = str(payload.get('drone_id', self.drone_id))
-        if not command_id:
+        if not payload.command_id:
             self.logger.warn(
                 f'Ignoring {route_name} completion without command_id'
             )
             return None
-        if payload_drone_id != self.drone_id:
+        if payload.drone_id != self.drone_id:
             self.logger.warn(
-                f'Ignoring {route_name} completion for drone_id={payload_drone_id}'
+                f'Ignoring {route_name} completion for drone_id={payload.drone_id}'
             )
             return None
 
-        outstanding = self.outstanding_commands.get(command_id)
+        outstanding = self.find_outstanding_command(payload.command_id)
         if outstanding is None:
             self.logger.warn(
-                f'Ignoring unexpected {route_name} completion for command_id={command_id}'
+                f'Ignoring unexpected {route_name} completion for command_id={payload.command_id}'
             )
             return None
-        if outstanding['route'] != route_name or outstanding['command_type'] != command_type:
+        if outstanding.route != route_name or outstanding.command_type != payload.command_type:
             self.logger.warn(
-                f'Ignoring mismatched {route_name} completion for command_id={command_id}'
+                f'Ignoring mismatched {route_name} completion for command_id={payload.command_id}'
             )
             return None
 
-        status = str(payload.get('status', ACK_STATUS_COMPLETED)).lower()
+        status = payload.status.lower()
         if status not in {ACK_STATUS_COMPLETED, ACK_STATUS_FAILED}:
             status = ACK_STATUS_COMPLETED
-        self.outstanding_commands.pop(command_id, None)
+        self.remove_outstanding_command(payload.command_id)
 
-        return {
-            'ack_at': utc_timestamp(),
-            'drone_id': self.drone_id,
-            'command_id': command_id,
-            'command_type': command_type,
-            'route': route_name,
-            'status': status,
-            'source_topic': self.completion_topics[route_name],
-            'details': payload,
-            'coordinator_link': self.coordinator_link_state(),
-        }
+        return EdgeAck(
+            ack_at=utc_timestamp(),
+            drone_id=self.drone_id,
+            command_id=payload.command_id,
+            command_type=payload.command_type,
+            route=route_name,
+            status=status,
+            source_topic=self.completion_topics.topic_for(route_name),
+            details=payload,
+            coordinator_link=self.coordinator_link_state(),
+        )
 
     def handle_flight_gps(self, latitude: float, longitude: float, altitude: float):
-        self.latest_position = {
-            'latitude': latitude,
-            'longitude': longitude,
-            'altitude': altitude,
-        }
+        self.latest_position = Position(
+            latitude=latitude,
+            longitude=longitude,
+            altitude=altitude,
+        )
 
     def handle_battery(self, voltage: float):
         self.latest_battery_voltage = voltage
@@ -222,21 +205,21 @@ class EdgeRoutingService:
     def handle_mission_status(self, value: str):
         self.latest_mission_status = value or 'idle'
 
-    def build_status_summary(self) -> dict:
-        return {
-            'timestamp': utc_timestamp(),
-            'drone_id': self.drone_id,
-            'groups': self.groups,
-            'coordinator_link': self.coordinator_link_state(),
-            'last_command_id': self.last_command_id,
-            'last_command_type': self.last_command_type,
-            'mode': self.latest_mode,
-            'autonomy_state': self.latest_autonomy_state,
-            'mission_status': self.latest_mission_status,
-            'battery_voltage': self.latest_battery_voltage,
-            'position': self.latest_position,
-            'route_topics': self.route_topics,
-        }
+    def build_status_summary(self) -> StatusSummary:
+        return StatusSummary(
+            timestamp=utc_timestamp(),
+            drone_id=self.drone_id,
+            groups=self.groups,
+            coordinator_link=self.coordinator_link_state(),
+            last_command_id=self.last_command_id,
+            last_command_type=self.last_command_type,
+            mode=self.latest_mode,
+            autonomy_state=self.latest_autonomy_state,
+            mission_status=self.latest_mission_status,
+            battery_voltage=self.latest_battery_voltage,
+            position=self.latest_position,
+            route_topics=self.route_topics,
+        )
 
     def coordinator_link_state(self) -> str:
         if self.last_contact_monotonic is None:
@@ -249,32 +232,25 @@ class EdgeRoutingService:
 
     def build_ack(
         self,
-        command: dict,
+        command: CommandModel,
         status: str,
         route_name: str,
         reason: str = '',
-    ) -> dict:
-        ack = {
-            'ack_at': utc_timestamp(),
-            'drone_id': self.drone_id,
-            'command_id': self.command_id(command),
-            'command_type': self.command_type(command),
-            'route': route_name,
-            'status': status,
-            'coordinator_link': self.coordinator_link_state(),
-        }
-        if reason:
-            ack['reason'] = reason
-        return ack
+    ) -> EdgeAck:
+        return EdgeAck(
+            ack_at=utc_timestamp(),
+            drone_id=self.drone_id,
+            command_id=command.command_id,
+            command_type=command.command_type,
+            route=route_name,
+            status=status,
+            coordinator_link=self.coordinator_link_state(),
+            reason=reason or None,
+        )
 
-    def publish_json(self, publisher, payload: dict):
-        message = String()
-        message.data = dumps_json(payload)
-        publisher.publish(message)
-
-    def matches_target(self, command: dict) -> bool:
+    def matches_target(self, command: CommandModel) -> bool:
         target_type = self.command_target_type(command)
-        target = command.get('target')
+        target = command.target
 
         if target_type == TARGET_TYPE_BROADCAST:
             return True
@@ -283,57 +259,111 @@ class EdgeRoutingService:
         if target_type == TARGET_TYPE_GROUP:
             return isinstance(target, str) and target in self.groups
         if target_type == TARGET_TYPE_MULTI:
-            targets = command.get('targets', [])
-            return isinstance(targets, list) and self.drone_id in targets
+            return self.drone_id in command.targets
         return False
 
-    def command_target_type(self, command: dict) -> str | None:
-        value = str(command.get('target_type', TARGET_TYPE_DRONE)).lower()
+    def command_target_type(self, command: CommandModel) -> str | None:
+        value = command.target_type
         if value in VALID_TARGET_TYPES:
             return value
         return None
 
-    def resolve_route_name(self, command: dict) -> str | None:
-        route_name = self.command_route_map.get(self.command_type(command))
-        if route_name not in self.route_topics:
-            return None
-        return route_name
+    def resolve_route_name(self, command: CommandModel) -> str | None:
+        command_type = command.command_type
+        if command_type in {
+            'arm',
+            'disarm',
+            'takeoff',
+            'land',
+            'rtl',
+            'hold',
+            'set_mode',
+            'goto_waypoint',
+            'ping',
+            'health_check',
+        }:
+            return ROUTE_FLIGHT
+        if command_type in {
+            'start_mission',
+            'pause_mission',
+            'resume_mission',
+            'abort_mission',
+        }:
+            return ROUTE_MISSION
+        if command_type == 'set_autonomy_state':
+            return ROUTE_AUTONOMY
+        if command_type in {'start_scan', 'stop_scan'}:
+            return ROUTE_VISION
+        return None
 
-    def command_id(self, command: dict) -> str:
-        return str(command.get('command_id', ''))
-
-    def command_type(self, command: dict) -> str:
-        return str(command.get('command_type', 'unknown')).lower()
-
-    def validate_command(self, command: dict) -> str:
-        if not self.command_id(command):
+    def validate_command(self, command: CommandModel) -> str:
+        if not command.command_id:
             return REASON_INVALID_COMMAND
-        if not self.command_type(command) or self.command_type(command) == 'unknown':
+        if not command.command_type or command.command_type == 'unknown':
             return REASON_INVALID_COMMAND
         if self.command_target_type(command) is None:
             return REASON_INVALID_TARGET_TYPE
         return ''
 
+    def find_outstanding_command(self, command_id: str) -> OutstandingCommand | None:
+        for outstanding_command in self.outstanding_commands:
+            if outstanding_command.command_id == command_id:
+                return outstanding_command
+        return None
 
-def load_route_topics(node) -> dict[str, str]:
-    topics = {}
-    for route_name, route_suffix in DEFAULT_ROUTE_TOPICS.items():
-        env_name = f'AETHER_{route_name.upper()}_COMMAND_TOPIC'
-        default_topic = config.topic(route_suffix)
-        topics[route_name] = node.declare_parameter(
-            f'{route_name}_command_topic',
-            os.getenv(env_name, default_topic),
-        ).value
-    return topics
+    def remove_outstanding_command(self, command_id: str):
+        self.outstanding_commands = [
+            outstanding_command
+            for outstanding_command in self.outstanding_commands
+            if outstanding_command.command_id != command_id
+        ]
 
 
-def load_completion_topics(node) -> dict[str, str]:
-    topics = {}
-    for route_name, route_suffix in DEFAULT_COMPLETION_TOPICS.items():
-        env_name = f'AETHER_{route_name.upper()}_EVENT_TOPIC'
-        default_topic = config.topic(route_suffix)
-        topics[route_name] = node.declare_parameter(
-            f'{route_name}_event_topic',
-            os.getenv(env_name, default_topic),
-        ).value
-    return topics
+def load_route_topics(node) -> RouteTopics:
+    return RouteTopics(
+        flight=node.declare_parameter(
+            'flight_command_topic',
+            os.getenv('AETHER_FLIGHT_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.flight)),
+        ).value,
+        autonomy=node.declare_parameter(
+            'autonomy_command_topic',
+            os.getenv('AETHER_AUTONOMY_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.autonomy)),
+        ).value,
+        vision=node.declare_parameter(
+            'vision_command_topic',
+            os.getenv('AETHER_VISION_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.vision)),
+        ).value,
+        mission=node.declare_parameter(
+            'mission_command_topic',
+            os.getenv('AETHER_MISSION_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.mission)),
+        ).value,
+        system=node.declare_parameter(
+            'system_command_topic',
+            os.getenv('AETHER_SYSTEM_COMMAND_TOPIC', config.topic(DEFAULT_ROUTE_TOPICS.system)),
+        ).value,
+    )
+
+
+def load_completion_topics(node) -> RouteTopics:
+    return RouteTopics(
+        flight=node.declare_parameter(
+            'flight_event_topic',
+            os.getenv('AETHER_FLIGHT_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.flight)),
+        ).value,
+        autonomy=node.declare_parameter(
+            'autonomy_event_topic',
+            os.getenv('AETHER_AUTONOMY_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.autonomy)),
+        ).value,
+        vision=node.declare_parameter(
+            'vision_event_topic',
+            os.getenv('AETHER_VISION_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.vision)),
+        ).value,
+        mission=node.declare_parameter(
+            'mission_event_topic',
+            os.getenv('AETHER_MISSION_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.mission)),
+        ).value,
+        system=node.declare_parameter(
+            'system_event_topic',
+            os.getenv('AETHER_SYSTEM_EVENT_TOPIC', config.topic(DEFAULT_COMPLETION_TOPICS.system)),
+        ).value,
+    )

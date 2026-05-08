@@ -1,4 +1,5 @@
-from common import (
+from common.common.commands import parse_json_model
+from common.common.constants import (
     REASON_COMMAND_IN_PROGRESS,
     REASON_INVALID_COMMAND,
     REASON_MAVLINK_SEND_FAILED,
@@ -8,12 +9,12 @@ from common import (
     REASON_UNKNOWN_MODE,
     STATUS_COMPLETED,
     STATUS_FAILED,
-    extract_nested_command,
-    parse_json_object,
-    verify_signed_payload,
 )
+from common.common.events import verify_signed_payload
+from common.common.types import CommandEvent, CommandPayload, EventDetails, RoutedCommandEnvelope
 
 from .events import flight_event
+from .types import PendingModeCommand
 
 UNSUPPORTED_COMMANDS = {
     'arm',
@@ -35,11 +36,15 @@ class FlightCommandService:
         self.mavlink_adapter = mavlink_adapter
         self.logger = logger
         self.auth_token = auth_token
-        self._pending_mode_command: dict | None = None
+        self._pending_mode_command: PendingModeCommand | None = None
 
-    def handle_routed_command(self, raw_value: str) -> tuple[dict | None, dict | None]:
-        envelope = parse_json_object(
+    def handle_routed_command(
+        self,
+        raw_value: str,
+    ) -> tuple[CommandEvent | None, PendingModeCommand | None]:
+        envelope = parse_json_model(
             raw_value,
+            RoutedCommandEnvelope,
             logger=self.logger,
             log_prefix='flight command',
         )
@@ -49,22 +54,9 @@ class FlightCommandService:
             self.logger.warn('Ignoring unsigned or invalidly signed flight command')
             return None, None
 
-        command = extract_nested_command(
-            envelope,
-            logger=self.logger,
-            log_prefix='flight command',
-        )
-        if command is None:
-            return self._event(
-                command_id='',
-                command_type='unknown',
-                status=STATUS_FAILED,
-                reason=REASON_INVALID_COMMAND,
-                details=self.mavlink_adapter.details(),
-            ), None
-
-        command_id = str(command.get('command_id', ''))
-        command_type = str(command.get('command_type', 'unknown')).lower()
+        command = envelope.command
+        command_id = command.command_id
+        command_type = command.command_type
 
         if command_type in UNSUPPORTED_COMMANDS:
             return self._failed_event(
@@ -80,7 +72,7 @@ class FlightCommandService:
             return self._set_mode(command_id, command_type, MODE_ALIASES[command_type])
 
         if command_type == 'set_mode':
-            requested_mode = self._requested_mode(command.get('payload', {}))
+            requested_mode = self._requested_mode(command.payload)
             return self._set_mode(command_id, command_type, requested_mode)
 
         return self._failed_event(
@@ -89,7 +81,7 @@ class FlightCommandService:
             REASON_INVALID_COMMAND,
         ), None
 
-    def _connection_result(self, command_id: str, command_type: str) -> dict:
+    def _connection_result(self, command_id: str, command_type: str) -> CommandEvent:
         if self.mavlink_adapter.is_connected():
             return self._event(
                 command_id=command_id,
@@ -104,10 +96,10 @@ class FlightCommandService:
         command_id: str,
         command_type: str,
         requested_mode: str,
-    ) -> tuple[dict | None, dict | None]:
+    ) -> tuple[CommandEvent | None, PendingModeCommand | None]:
         details = self.mavlink_adapter.details()
         if requested_mode:
-            details['requested_mode'] = requested_mode
+            details.requested_mode = requested_mode
 
         rejection = self._reject_set_mode_preconditions(
             command_id,
@@ -120,13 +112,13 @@ class FlightCommandService:
 
         sent, reason = self.mavlink_adapter.send_mode_change(requested_mode)
         if sent:
-            self._pending_mode_command = {
-                'command_id': command_id,
-                'command_type': command_type,
-                'requested_mode': requested_mode,
-                'details': details,
-            }
-            return None, dict(self._pending_mode_command)
+            self._pending_mode_command = PendingModeCommand(
+                command_id=command_id,
+                command_type=command_type,
+                requested_mode=requested_mode,
+                details=details,
+            )
+            return None, self._pending_mode_command.model_copy()
 
         return self._event(
             command_id=command_id,
@@ -136,7 +128,7 @@ class FlightCommandService:
             details=details,
         ), None
 
-    def _failed_event(self, command_id: str, command_type: str, reason: str) -> dict:
+    def _failed_event(self, command_id: str, command_type: str, reason: str) -> CommandEvent:
         return self._event(
             command_id=command_id,
             command_type=command_type,
@@ -145,35 +137,39 @@ class FlightCommandService:
             details=self.mavlink_adapter.details(),
         )
 
-    def _requested_mode(self, payload: dict) -> str:
+    def _requested_mode(self, payload: CommandPayload) -> str:
         for key in ('mode', 'target_mode'):
-            value = payload.get(key)
+            value = getattr(payload, key, None)
             if isinstance(value, str) and value.strip():
                 return value.strip().upper()
         return ''
 
-    def confirm_mode_change(self, pending_command: dict, observed_mode: str) -> dict | None:
-        if observed_mode.strip().upper() != pending_command['requested_mode']:
+    def confirm_mode_change(
+        self,
+        pending_command: PendingModeCommand,
+        observed_mode: str,
+    ) -> CommandEvent | None:
+        if observed_mode.strip().upper() != pending_command.requested_mode:
             return None
 
-        details = dict(pending_command['details'])
-        details['observed_mode'] = observed_mode
-        details['result_scope'] = 'flight_controller_mode_confirmed'
+        details = pending_command.details.model_copy()
+        details.observed_mode = observed_mode
+        details.result_scope = 'flight_controller_mode_confirmed'
         self._pending_mode_command = None
         return self._event(
-            command_id=pending_command['command_id'],
-            command_type=pending_command['command_type'],
+            command_id=pending_command.command_id,
+            command_type=pending_command.command_type,
             status=STATUS_COMPLETED,
             details=details,
         )
 
-    def mode_timeout_event(self, pending_command: dict) -> dict:
-        details = dict(pending_command['details'])
-        details['result_scope'] = 'flight_controller_mode_not_confirmed'
+    def mode_timeout_event(self, pending_command: PendingModeCommand) -> CommandEvent:
+        details = pending_command.details.model_copy()
+        details.result_scope = 'flight_controller_mode_not_confirmed'
         self._pending_mode_command = None
         return self._event(
-            command_id=pending_command['command_id'],
-            command_type=pending_command['command_type'],
+            command_id=pending_command.command_id,
+            command_type=pending_command.command_type,
             status=STATUS_FAILED,
             reason=REASON_MODE_CHANGE_TIMEOUT,
             details=details,
@@ -184,11 +180,11 @@ class FlightCommandService:
         command_id: str,
         command_type: str,
         requested_mode: str,
-        details: dict,
-    ) -> dict | None:
+        details: EventDetails,
+    ) -> CommandEvent | None:
         if self._pending_mode_command is not None:
-            details['pending_command_id'] = self._pending_mode_command['command_id']
-            details['pending_requested_mode'] = self._pending_mode_command['requested_mode']
+            details.pending_command_id = self._pending_mode_command.command_id
+            details.pending_requested_mode = self._pending_mode_command.requested_mode
             return self._event(
                 command_id=command_id,
                 command_type=command_type,
@@ -221,8 +217,8 @@ class FlightCommandService:
         status: str,
         *,
         reason: str = '',
-        details: dict | None = None,
-    ) -> dict:
+        details: EventDetails | None = None,
+    ) -> CommandEvent:
         return flight_event(
             drone_id=self.drone_id,
             secret=self.auth_token,

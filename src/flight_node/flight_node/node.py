@@ -1,10 +1,11 @@
 import traceback
 
+from geometry_msgs.msg import Vector3
+from common.common.publishers import JsonPublisher
+from common.common.types import CommandEvent
 from config import config
 from rclpy.node import Node
-from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import BatteryState, NavSatFix, NavSatStatus
-from common import dumps_json
 from std_msgs.msg import String
 
 from .adapters import MavlinkAdapter
@@ -16,6 +17,7 @@ from .telemetry import (
     gps_status_message,
     mode_message,
 )
+from .types import PendingModeCommand
 
 
 class FlightNode(Node):
@@ -78,10 +80,12 @@ class FlightNode(Node):
             f'{self.flight_topic_prefix}/mode',
             10,
         )
-        self.event_publisher_ = self.create_publisher(
-            String,
-            f'{self.flight_topic_prefix}/events',
-            10,
+        self.event_publisher_ = JsonPublisher(
+            self.create_publisher(
+                String,
+                f'{self.flight_topic_prefix}/events',
+                10,
+            )
         )
         self.command_subscription_ = self.create_subscription(
             String,
@@ -98,7 +102,7 @@ class FlightNode(Node):
             logger=self.get_logger(),
             auth_token=auth_token,
         )
-        self.pending_mode_command: dict | None = None
+        self.pending_mode_command: PendingModeCommand | None = None
         self.mode_confirm_timeout_ns = int(mode_confirm_timeout_s * 1_000_000_000)
         self.timer_ = self.create_timer(0.2, self.update)
         self.get_logger().info(
@@ -108,24 +112,22 @@ class FlightNode(Node):
     def handle_command(self, msg: String):
         event, pending_mode_command = self.command_service.handle_routed_command(msg.data)
         if pending_mode_command is not None:
-            pending_mode_command['requested_at_ns'] = self.get_clock().now().nanoseconds
+            pending_mode_command.requested_at_ns = self.get_clock().now().nanoseconds
             self.pending_mode_command = pending_mode_command
         if event is None:
             return
 
         self.publish_event(event)
 
-    def publish_event(self, event: dict):
-        event_message = String()
-        event_message.data = dumps_json(event)
-        self.event_publisher_.publish(event_message)
+    def publish_event(self, event: CommandEvent):
+        self.event_publisher_.publish(event)
 
     def check_pending_mode_timeout(self):
         if self.pending_mode_command is None:
             return
 
         now_ns = self.get_clock().now().nanoseconds
-        if now_ns - self.pending_mode_command['requested_at_ns'] < self.mode_confirm_timeout_ns:
+        if now_ns - self.pending_mode_command.requested_at_ns < self.mode_confirm_timeout_ns:
             return
 
         event = self.command_service.mode_timeout_event(self.pending_mode_command)
