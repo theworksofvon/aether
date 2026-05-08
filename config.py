@@ -107,6 +107,18 @@ class Config:
     def topic(self, suffix: str) -> str:
         return f'/{self.drone.AETHER_DRONE_ID}/{suffix}'
 
+    def require_auth_token(self, source: str, token: str | None = None) -> str:
+        token = self.security.AETHER_COMMAND_AUTH_TOKEN if token is None else token
+        if not isinstance(token, str) or not token.strip():
+            raise RuntimeError(
+                f'AETHER_COMMAND_AUTH_TOKEN must be set for {source} startup'
+            )
+        if token == COMMAND_AUTH_TOKEN_PLACEHOLDER:
+            raise RuntimeError(
+                'AETHER_COMMAND_AUTH_TOKEN cannot use the example placeholder value'
+            )
+        return token
+
 
 @lru_cache(maxsize=1)
 def get_config() -> Config:

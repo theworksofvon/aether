@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from common import (
     dumps_json,
@@ -9,6 +8,7 @@ from common import (
     verify_signed_payload,
 )
 from config import config
+from std_msgs.msg import String
 
 TARGET_TYPE_DRONE = 'drone'
 TARGET_TYPE_GROUP = 'group'
@@ -91,7 +91,7 @@ class EdgeRoutingService:
         self.clock_now_ns = clock_now_ns
         self.command_route_map = dict(DEFAULT_COMMAND_ROUTES)
 
-        self.last_contact_monotonic: Optional[int] = None
+        self.last_contact_monotonic: int | None = None
         self.last_command_id = ''
         self.last_command_type = ''
         self.latest_position = None
@@ -133,7 +133,6 @@ class EdgeRoutingService:
             )
             return None, None, ack
 
-        self.apply_command_state(command)
         routed_command = {
             'received_at': utc_timestamp(),
             'drone_id': self.drone_id,
@@ -269,8 +268,6 @@ class EdgeRoutingService:
         return ack
 
     def publish_json(self, publisher, payload: dict):
-        from std_msgs.msg import String
-
         message = String()
         message.data = dumps_json(payload)
         publisher.publish(message)
@@ -279,8 +276,6 @@ class EdgeRoutingService:
         target_type = self.command_target_type(command)
         target = command.get('target')
 
-        if target_type is None:
-            return False
         if target_type == TARGET_TYPE_BROADCAST:
             return True
         if target_type == TARGET_TYPE_DRONE:
@@ -318,17 +313,6 @@ class EdgeRoutingService:
         if self.command_target_type(command) is None:
             return REASON_INVALID_TARGET_TYPE
         return ''
-
-    def apply_command_state(self, command: dict):
-        command_type = self.command_type(command)
-        if command_type == 'start_mission':
-            self.latest_mission_status = 'active'
-        elif command_type == 'pause_mission':
-            self.latest_mission_status = 'paused'
-        elif command_type == 'resume_mission':
-            self.latest_mission_status = 'active'
-        elif command_type in {'hold', 'rtl', 'land', 'abort_mission'}:
-            self.latest_mission_status = command_type
 
 
 def load_route_topics(node) -> dict[str, str]:

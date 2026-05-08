@@ -31,7 +31,7 @@ def build_command_event(
 
 
 def dumps_json(payload: dict) -> str:
-    return json.dumps(payload)
+    return canonical_json(payload)
 
 
 def canonical_json(payload: dict) -> str:
@@ -51,8 +51,8 @@ def sign_payload(payload: dict, secret: str) -> dict:
 
 
 def verify_signed_payload(payload: dict, secret: str) -> bool:
-    signature = str(payload.get('signature', ''))
-    if not signature:
+    signature = payload.get('signature')
+    if not isinstance(signature, str) or not signature:
         return False
 
     unsigned_payload = dict(payload)

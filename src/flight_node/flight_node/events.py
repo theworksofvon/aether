@@ -12,12 +12,12 @@ def flight_event(
 ) -> dict:
     return sign_payload(
         build_command_event(
-        drone_id=drone_id,
-        command_id=command_id,
-        command_type=command_type,
-        status=status,
-        reason=reason,
-        details=details,
+            drone_id=drone_id,
+            command_id=command_id,
+            command_type=command_type,
+            status=status,
+            reason=reason,
+            details=details,
         ),
         secret,
     )

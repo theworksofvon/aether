@@ -1,4 +1,6 @@
-from config import COMMAND_AUTH_TOKEN_PLACEHOLDER, config
+import traceback
+
+from config import config
 from rclpy.node import Node
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import BatteryState, NavSatFix, NavSatStatus
@@ -43,18 +45,13 @@ class FlightNode(Node):
                 config.flight.AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S,
             ).value
         )
-        auth_token = self.declare_parameter(
-            'command_auth_token',
-            config.security.AETHER_COMMAND_AUTH_TOKEN,
-        ).value
-        if not isinstance(auth_token, str) or not auth_token.strip():
-            raise RuntimeError(
-                'AETHER_COMMAND_AUTH_TOKEN must be set for flight_node startup'
-            )
-        if auth_token == COMMAND_AUTH_TOKEN_PLACEHOLDER:
-            raise RuntimeError(
-                'AETHER_COMMAND_AUTH_TOKEN cannot use the example placeholder value'
-            )
+        auth_token = config.require_auth_token(
+            'flight_node',
+            self.declare_parameter(
+                'command_auth_token',
+                config.security.AETHER_COMMAND_AUTH_TOKEN,
+            ).value,
+        )
 
         self.gps_publisher_ = self.create_publisher(
             NavSatFix,
@@ -109,17 +106,14 @@ class FlightNode(Node):
         )
 
     def handle_command(self, msg: String):
-        event = self.command_service.handle_routed_command(msg.data)
-        pending_mode_command = self.command_service.take_new_pending_mode_command()
+        event, pending_mode_command = self.command_service.handle_routed_command(msg.data)
         if pending_mode_command is not None:
             pending_mode_command['requested_at_ns'] = self.get_clock().now().nanoseconds
             self.pending_mode_command = pending_mode_command
         if event is None:
             return
 
-        event_message = String()
-        event_message.data = dumps_json(event)
-        self.event_publisher_.publish(event_message)
+        self.publish_event(event)
 
     def publish_event(self, event: dict):
         event_message = String()
@@ -144,28 +138,39 @@ class FlightNode(Node):
         if mavlink_message is None:
             return
 
+        message_type = 'unknown'
         try:
             message_type = mavlink_message.get_type()
-            if message_type == 'ATTITUDE':
-                self.attitude_publisher_.publish(attitude_message(mavlink_message))
-            elif message_type == 'GLOBAL_POSITION_INT':
-                self.gps_publisher_.publish(gps_message(mavlink_message))
-            elif message_type == 'GPS_RAW_INT':
-                self.gps_status_publisher_.publish(gps_status_message(mavlink_message))
-            elif message_type == 'SYS_STATUS':
-                self.battery_publisher_.publish(battery_message(mavlink_message))
-            elif message_type == 'HEARTBEAT':
-                observed_mode = self.mavlink.mode_string(mavlink_message)
-                self.mode_publisher_.publish(
-                    mode_message(observed_mode)
-                )
-                if self.pending_mode_command is not None:
-                    event = self.command_service.confirm_mode_change(
-                        self.pending_mode_command,
-                        observed_mode,
-                    )
-                    if event is not None:
-                        self.pending_mode_command = None
-                        self.publish_event(event)
+            if message_type == 'HEARTBEAT':
+                self._handle_heartbeat(mavlink_message)
+            else:
+                self._publish_telemetry(message_type, mavlink_message)
         except Exception as exc:
-            self.get_logger().error(f'Error reading message: {exc}')
+            self.get_logger().error(
+                f'Error handling MAVLink message type={message_type}: {exc}'
+            )
+            self.get_logger().error(traceback.format_exc())
+
+    def _handle_heartbeat(self, mavlink_message):
+        observed_mode = self.mavlink.mode_string(mavlink_message)
+        self.mode_publisher_.publish(mode_message(observed_mode))
+        if self.pending_mode_command is None:
+            return
+
+        event = self.command_service.confirm_mode_change(
+            self.pending_mode_command,
+            observed_mode,
+        )
+        if event is not None:
+            self.pending_mode_command = None
+            self.publish_event(event)
+
+    def _publish_telemetry(self, message_type: str, mavlink_message):
+        if message_type == 'ATTITUDE':
+            self.attitude_publisher_.publish(attitude_message(mavlink_message))
+        elif message_type == 'GLOBAL_POSITION_INT':
+            self.gps_publisher_.publish(gps_message(mavlink_message))
+        elif message_type == 'GPS_RAW_INT':
+            self.gps_status_publisher_.publish(gps_status_message(mavlink_message))
+        elif message_type == 'SYS_STATUS':
+            self.battery_publisher_.publish(battery_message(mavlink_message))
