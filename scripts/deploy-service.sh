@@ -4,9 +4,17 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICE_SOURCE="$REPO_DIR/systemd/aether.service"
 SERVICE_TARGET="/etc/systemd/system/aether.service"
+TMP_SERVICE="$(mktemp)"
+
+cleanup() {
+  rm -f "$TMP_SERVICE"
+}
+
+trap cleanup EXIT
 
 echo "Deploying aether.service from $SERVICE_SOURCE"
-sudo install -m 0644 "$SERVICE_SOURCE" "$SERVICE_TARGET"
+sed "s|__AETHER_REPO_DIR__|$REPO_DIR|g" "$SERVICE_SOURCE" > "$TMP_SERVICE"
+sudo install -m 0644 "$TMP_SERVICE" "$SERVICE_TARGET"
 sudo systemctl daemon-reload
 sudo systemctl enable aether.service
 echo "Service installed and enabled"

@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -13,6 +13,17 @@ class DroneConfig(BaseSettings):
         description='Comma-separated drone groups',
         default_factory=list,
     )
+
+    @field_validator('AETHER_DRONE_GROUPS', mode='before')
+    @classmethod
+    def parse_drone_groups(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            if not value.strip():
+                return []
+            return [item.strip() for item in value.split(',') if item.strip()]
+        return value
 
 
 class FlightConfig(BaseSettings):

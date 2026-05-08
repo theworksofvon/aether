@@ -52,6 +52,8 @@ sudo ./scripts/deploy-service.sh
 sudo systemctl start aether
 ```
 
+`deploy-service.sh` renders the unit with the repo's current absolute path, so you do not need to edit the service file if the checkout lives somewhere other than a hardcoded home directory.
+
 ## 6. Verify
 
 ```bash

@@ -193,9 +193,9 @@ Local `uv` environments are for development speed; Podman containers on the targ
 Aether runs as a split edge stack rather than one monolith. Each node can fail and restart independently, which keeps non-essential failures from blocking the whole drone runtime.
 
 - `compose.yaml` defines the containerized stack
-- `systemd/aether.service` manages stack startup at boot
+- `systemd/aether.service` is a template for boot startup
 - `scripts/build-containers.sh` builds the containers
-- `scripts/deploy-service.sh` installs and enables the systemd unit
+- `scripts/deploy-service.sh` renders the service with the current repo path, then installs and enables the systemd unit
 
 Service model:
 
