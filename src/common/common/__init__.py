@@ -1,4 +1,4 @@
-from .commands import extract_nested_command, parse_json_object
+from .commands import parse_json_model
 from .constants import (
     REASON_INVALID_COMMAND,
     REASON_COMMAND_IN_PROGRESS,
@@ -17,6 +17,8 @@ from .events import (
     utc_timestamp,
     verify_signed_payload,
 )
+from .publishers import JsonPublisher
+from .types import CommandEvent, CommandModel, CommandPayload, EventDetails, Position, RoutedCommandEnvelope
 
 __all__ = [
     'REASON_INVALID_COMMAND',
@@ -29,9 +31,15 @@ __all__ = [
     'STATUS_COMPLETED',
     'STATUS_FAILED',
     'build_command_event',
+    'CommandEvent',
+    'CommandModel',
+    'CommandPayload',
     'dumps_json',
-    'extract_nested_command',
-    'parse_json_object',
+    'EventDetails',
+    'JsonPublisher',
+    'parse_json_model',
+    'Position',
+    'RoutedCommandEnvelope',
     'sign_payload',
     'utc_timestamp',
     'verify_signed_payload',
