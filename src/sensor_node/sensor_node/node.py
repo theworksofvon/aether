@@ -1,4 +1,4 @@
-from config import get_config
+from config import config
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 
@@ -9,7 +9,6 @@ from .services import sensor_reading_message
 class SensorNode(Node):
     def __init__(self):
         super().__init__('sensor_node')
-        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
             config.drone.AETHER_DRONE_ID,

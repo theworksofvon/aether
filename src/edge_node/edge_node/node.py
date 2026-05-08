@@ -1,4 +1,4 @@
-from config import get_config
+from config import COMMAND_AUTH_TOKEN_PLACEHOLDER, config
 from rclpy.node import Node
 from sensor_msgs.msg import BatteryState, NavSatFix
 from std_msgs.msg import String
@@ -9,7 +9,6 @@ from .services import EdgeRoutingService, load_completion_topics, load_route_top
 class EdgeNode(Node):
     def __init__(self):
         super().__init__('edge_node')
-        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
             config.drone.AETHER_DRONE_ID,
@@ -36,6 +35,14 @@ class EdgeNode(Node):
             'command_auth_token',
             config.security.AETHER_COMMAND_AUTH_TOKEN,
         ).value
+        if not isinstance(auth_token, str) or not auth_token.strip():
+            raise RuntimeError(
+                'AETHER_COMMAND_AUTH_TOKEN must be set for edge_node startup'
+            )
+        if auth_token == COMMAND_AUTH_TOKEN_PLACEHOLDER:
+            raise RuntimeError(
+                'AETHER_COMMAND_AUTH_TOKEN cannot use the example placeholder value'
+            )
 
         self.fleet_commands_topic = self.declare_parameter(
             'fleet_commands_topic',

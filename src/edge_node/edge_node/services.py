@@ -8,7 +8,7 @@ from common import (
     utc_timestamp,
     verify_signed_payload,
 )
-from config import get_config
+from config import config
 
 TARGET_TYPE_DRONE = 'drone'
 TARGET_TYPE_GROUP = 'group'
@@ -332,7 +332,6 @@ class EdgeRoutingService:
 
 
 def load_route_topics(node) -> dict[str, str]:
-    config = get_config()
     topics = {}
     for route_name, route_suffix in DEFAULT_ROUTE_TOPICS.items():
         env_name = f'AETHER_{route_name.upper()}_COMMAND_TOPIC'
@@ -345,7 +344,6 @@ def load_route_topics(node) -> dict[str, str]:
 
 
 def load_completion_topics(node) -> dict[str, str]:
-    config = get_config()
     topics = {}
     for route_name, route_suffix in DEFAULT_COMPLETION_TOPICS.items():
         env_name = f'AETHER_{route_name.upper()}_EVENT_TOPIC'

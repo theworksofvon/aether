@@ -38,7 +38,7 @@ Update `.env` for your hardware, especially:
 - `AETHER_COMMAND_AUTH_TOKEN`
 
 For a USB-UART bridge to the Matek, `AETHER_FLIGHT_DEVICE` will typically be something like `/dev/ttyUSB0`.
-Set `AETHER_COMMAND_AUTH_TOKEN` to a secret value shared by the `edge` and `flight` services before using the stack outside local development.
+Set `AETHER_COMMAND_AUTH_TOKEN` to a secret value shared by the `edge` and `flight` services. `edge_node` and `flight_node` will refuse to start if it is unset or left at the example placeholder value.
 
 ## 4. Build the Container Stack
 

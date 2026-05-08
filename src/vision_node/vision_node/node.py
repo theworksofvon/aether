@@ -1,4 +1,4 @@
-from config import get_config
+from config import config
 from rclpy.node import Node
 from vision_msgs.msg import Detection2DArray
 
@@ -9,7 +9,6 @@ from .services import detections_message
 class VisionNode(Node):
     def __init__(self):
         super().__init__('vision_node')
-        config = get_config()
         self.drone_id = self.declare_parameter(
             'drone_id',
             config.drone.AETHER_DRONE_ID,

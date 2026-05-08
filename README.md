@@ -133,7 +133,7 @@ Each Python node reads from the shared config model first, then exposes ROS para
 
 The internal `common` package is not its own long-running service. It is a small Python helper library that gets built into only the node images that import it, so it does not make `sensor_node` or `vision_node` depend on `edge_node` or `flight_node` at runtime.
 
-The `edge` and `flight` services also share an HMAC token used to sign routed commands and completion events. That reduces spoofing risk on the local ROS graph, but it still assumes the token is kept secret and should be overridden from the development default in any real deployment.
+The `edge` and `flight` services also share an HMAC token used to sign routed commands and completion events. That token has no built-in usable default at runtime: `edge_node` and `flight_node` will refuse to start if it is missing or still set to the example placeholder value.
 
 ## Python Dependencies
 

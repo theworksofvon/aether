@@ -3,6 +3,8 @@ from functools import lru_cache
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
+COMMAND_AUTH_TOKEN_PLACEHOLDER = 'change-me-before-production'
+
 
 class DroneConfig(BaseSettings):
     AETHER_DRONE_ID: str = Field(
@@ -88,7 +90,7 @@ class FleetConfig(BaseSettings):
 class SecurityConfig(BaseSettings):
     AETHER_COMMAND_AUTH_TOKEN: str = Field(
         description='Shared HMAC secret for routed commands and completion events',
-        default='aether-dev-shared-secret',
+        default='',
     )
 
 
@@ -109,3 +111,6 @@ class Config:
 @lru_cache(maxsize=1)
 def get_config() -> Config:
     return Config()
+
+
+config = get_config()
