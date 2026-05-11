@@ -1,0 +1,18 @@
+[Unit]
+Description=Aether edge runtime stack
+Wants=network-online.target
+After=network-online.target podman.service
+Requires=podman.service
+ConditionPathExists=__AETHER_REPO_DIR__/compose.yaml
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=__AETHER_REPO_DIR__
+ExecStart=/usr/bin/podman compose -f __AETHER_REPO_DIR__/compose.yaml up -d
+ExecStop=/usr/bin/podman compose -f __AETHER_REPO_DIR__/compose.yaml down
+TimeoutStartSec=0
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

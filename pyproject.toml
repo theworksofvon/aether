@@ -1,0 +1,36 @@
+[project]
+name = "aether"
+version = "0.1.0"
+description = "Aether onboard edge runtime"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-settings>=2.14.0",
+]
+
+[dependency-groups]
+shared = [
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.11.0",
+]
+edge = [
+  { include-group = "shared" },
+]
+flight = [
+  { include-group = "shared" },
+  "pymavlink>=2.4.49",
+]
+sensor = [
+  { include-group = "shared" },
+  "adafruit-blinka>=8.66.0",
+  "adafruit-circuitpython-dht>=4.0.9",
+  "lgpio>=0.2.2.0",
+]
+vision = [
+  { include-group = "shared" },
+  "opencv-python-headless>=4.12.0.88",
+  "ultralytics>=8.3.221",
+]
+dev = []
+
+[tool.uv]
+default-groups = []

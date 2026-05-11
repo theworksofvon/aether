@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'vision_node'
+package_name = 'edge_node'
 
 setup(
     name=package_name,
@@ -16,7 +16,7 @@ setup(
     install_requires=['setuptools'],
     entry_points={
         'console_scripts': [
-            'vision_node = vision_node.vision_node:main',
+            'edge_node = edge_node.edge_node:main',
         ],
     },
 )

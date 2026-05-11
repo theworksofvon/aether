@@ -1,15 +1,19 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>vision_node</name>
+  <name>edge_node</name>
   <version>0.0.1</version>
-  <description>Vision node for aether drone</description>
+  <description>Fleet-facing edge runtime for aether drones</description>
   <maintainer email="admin@ek-labs.com">EK LABS</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
+
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
-  <depend>vision_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>common</depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>

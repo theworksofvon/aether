@@ -3,14 +3,14 @@
 ## Prerequisites
 
 - Raspberry Pi 5 running Ubuntu Server 24.04
-- GPS module connected via USB
+- USB-UART adapter connecting the Pi to the Matek flight controller
 - Repo cloned to `/home/<user>/aether`
 
 ## 1. Install Dependencies
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake git podman
+sudo apt install -y build-essential cmake git podman python3-pip
 ```
 
 ## 2. Fix Package Conflicts (Ubuntu 24.04)
@@ -22,100 +22,84 @@ sudo apt install libbz2-1.0=1.0.8-5.1 --allow-downgrades
 sudo apt install -y build-essential cmake git
 ```
 
-## 3. Build the Container Image
+## 3. Configure the Runtime
 
 ```bash
 cd ~/aether
-podman build -t localhost/aether:latest .
+cp .env.example .env
 ```
 
-## 4. Build ROS 2 Nodes
+Update `.env` for your hardware, especially:
+
+- `AETHER_DRONE_ID`
+- `AETHER_FLIGHT_DEVICE`
+- `AETHER_FLIGHT_BAUD_RATE`
+- `AETHER_FLIGHT_MODE_CONFIRM_TIMEOUT_S`
+- `AETHER_COMMAND_AUTH_TOKEN`
+
+For a USB-UART bridge to the Matek, `AETHER_FLIGHT_DEVICE` will typically be something like `/dev/ttyUSB0`.
+Set `AETHER_COMMAND_AUTH_TOKEN` to a secret value shared by the `edge` and `flight` services. `edge_node` and `flight_node` will refuse to start if it is unset or left at the example placeholder value.
+
+## 4. Build the Container Stack
 
 ```bash
-podman run -it --rm \
-  --device /dev/ttyUSB0 \
-  --privileged \
-  -v ~/aether:/aether \
-  localhost/aether bash
-
-# Inside container
-source /opt/ros/jazzy/setup.bash
-colcon build
-exit
+./scripts/build-containers.sh
 ```
 
 ## 5. Set Up Auto-Start on Boot
 
-Load the image into root's storage (required for systemd):
+Install the systemd unit from the repo into `/etc/systemd/system/aether.service`:
 
 ```bash
-podman save localhost/aether:latest -o /tmp/aether.tar
-sudo podman load -i /tmp/aether.tar
+sudo ./scripts/deploy-service.sh
+sudo systemctl start aether
 ```
 
-Start a named container to generate the service from:
-
-```bash
-sudo chmod 666 /dev/ttyUSB0
-
-podman run -d \
-  --name aether \
-  --device /dev/ttyUSB0 \
-  --privileged \
-  -v ~/aether:/aether \
-  localhost/aether \
-  /bin/bash -c "source /opt/ros/jazzy/setup.bash && source /aether/install/setup.bash && ros2 run gps_node gps_node"
-```
-
-Generate and install the systemd service:
-
-```bash
-podman generate systemd --new --name aether | sudo tee /etc/systemd/system/aether.service
-```
-
-Add GPS permission to the service file — insert before `ExecStart`:
-
-```ini
-ExecStartPre=/bin/chmod 666 /dev/ttyUSB0
-```
-
-Enable and start:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable aether.service
-sudo systemctl start aether.service
-```
+`deploy-service.sh` renders the unit with the repo's current absolute path, so you do not need to edit the service file if the checkout lives somewhere other than a hardcoded home directory.
 
 ## 6. Verify
 
 ```bash
-sudo systemctl status aether.service
+sudo systemctl status aether
+podman compose ps
 ```
 
-You should see GPS data streaming in the logs. Reboot to confirm auto-start works.
+You should see the `edge` and `flight` services running. Reboot to confirm auto-start works.
+
+Optional services can be started with the compose profile:
+
+```bash
+podman compose --profile optional up -d
+```
+
+## 7. Local Development
+
+For host-side development, use `uv` and only install the groups you actually need:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv sync --group edge --group flight
+```
+
+Add `--group vision` if you need the vision stack locally.
+The `sensor` group is better treated as Pi-targeted unless you specifically need it on your host machine.
 
 ## Updating Code
 
 ```bash
-# Edit source files
-# Then rebuild inside container
-podman run -it --rm \
-  --device /dev/ttyUSB0 \
-  --privileged \
-  -v ~/aether:/aether \
-  localhost/aether bash -c \
-  "source /opt/ros/jazzy/setup.bash && colcon build"
+# Rebuild the stack after source changes
+./scripts/build-containers.sh
 
-# Restart service to pick up changes
-sudo systemctl restart aether.service
+# Restart the runtime
+sudo systemctl restart aether
 ```
 
 ## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
-| GPS permission denied | `sudo chmod 666 /dev/ttyUSB0` |
-| Container not found by systemd | `sudo podman load -i /tmp/aether.tar` |
-| Service keeps restarting | `journalctl -xeu aether.service` |
-| No GPS data | Check `ls /dev/ttyUSB*` and verify module is connected |
+| Flight controller not detected | Check `ls /dev/ttyUSB*` and verify the USB-UART adapter is connected |
+| Service failed to start | `journalctl -xeu aether.service` |
+| Containers not running | `podman compose ps` |
+| Local `uv sync` fails on sensor deps | Skip `--group sensor` on non-Pi machines unless you have the required system build tools |

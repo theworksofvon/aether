@@ -1,11 +1,11 @@
 import rclpy
 
-from .node import SensorNode
+from .node import EdgeNode
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = SensorNode()
+    node = EdgeNode()
     rclpy.spin(node)
     rclpy.shutdown()
 

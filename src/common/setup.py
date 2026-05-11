@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'vision_node'
+package_name = 'common'
 
 setup(
     name=package_name,
@@ -14,9 +14,4 @@ setup(
         (f'share/{package_name}', ['package.xml']),
     ],
     install_requires=['setuptools'],
-    entry_points={
-        'console_scripts': [
-            'vision_node = vision_node.vision_node:main',
-        ],
-    },
 )
